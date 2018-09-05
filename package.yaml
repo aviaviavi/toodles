@@ -1,0 +1,46 @@
+name:                pile
+version:             0.1.0.0
+github:              "aviaviavi/pile"
+license:             MIT
+author:              "Avi Press"
+maintainer:          "mail@avi.press"
+copyright:           "2018 Avi Press"
+
+extra-source-files:
+- README.md
+
+synopsis:            Manage the TODO entries in your code
+description:         See the README on GitHub at <https://github.com/aviaviavi/pile#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+
+library:
+  source-dirs: src
+
+executables:
+  pile-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - pile
+    - text
+    - megaparsec
+    - directory
+    - filepath
+    - MissingH
+
+# tests:
+#   pile-test:
+#     main:                Spec.hs
+#     source-dirs:         test
+#     ghc-options:
+#     - -threaded
+#     - -rtsopts
+#     - -with-rtsopts=-N
+#     dependencies:
+#     - pile
