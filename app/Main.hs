@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Main where
@@ -12,10 +13,14 @@ import           System.Path
 import           Text.Megaparsec
 import           Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
+import           System.Console.CmdArgs
+import System.Console.CmdArgs.Explicit
+
 
 import           Lib
 
 data CommentedLine = CommentedLine
+
   { sourceFile  :: FilePath
   , lineNumber  :: Integer
   , rawText     :: T.Text
@@ -32,6 +37,16 @@ data SourceFile = SourceFile {
   fullPath    :: FilePath,
   sourceLines :: [T.Text]
                              }
+
+data PileArgs = PileArgs {
+  projectRoot :: Maybe FilePath
+                         } deriving (Show, Data, Typeable, Eq)
+
+argParser :: PileArgs =
+  PileArgs {
+  projectRoot = def &= typFile &= help "Root directory of your project"
+           }
+
 fileTypeToComment :: [(T.Text, T.Text)]
 fileTypeToComment =
   [ ("hs", "--")
@@ -73,8 +88,6 @@ parseTodo extension = do
   return $ TodoEntry (T.pack b) Nothing
 
 -- TODO hi hi hi
-hardCodedDir :: FilePath
-hardCodedDir = "/Users/avipress/side/pile"
 
 -- TODO(avi) here's a todo!
 getAllFiles :: FilePath -> IO [SourceFile]
@@ -97,11 +110,18 @@ getExtension :: FilePath -> T.Text
 getExtension path = last $ T.splitOn "." (T.pack path)
 
 runTodoParser :: SourceFile -> [TodoEntry]
-runTodoParser (SourceFile path ls) = map fromJust $ filter isJust $ map (parseMaybe . parseTodo $ getExtension path) ls
+runTodoParser (SourceFile path ls) =
+  map fromJust $
+  filter isJust $ map (parseMaybe . parseTodo $ getExtension path) ls
 
 main :: IO ()
 main = do
   putStrLn "pile"
-  allFiles <- getAllFiles hardCodedDir
-  let parsedTodos = concatMap runTodoParser allFiles
-  print $ (take 5) parsedTodos
+  userArgs <- cmdArgs argParser
+  let directory  = (projectRoot userArgs)
+  if isJust directory then do
+    allFiles <- getAllFiles $ fromJust directory
+    let parsedTodos = concatMap runTodoParser allFiles
+    print $ (take 5) parsedTodos
+  else
+    putStrLn "no directory supplied"

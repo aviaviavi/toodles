@@ -33,6 +33,7 @@ executables:
     - directory
     - filepath
     - MissingH
+    - cmdargs
 
 # tests:
 #   pile-test:
