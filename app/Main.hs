@@ -4,22 +4,22 @@
 
 module Main where
 
-import qualified Control.Exception               as E
+import qualified Control.Exception          as E
 import           Data.Maybe
-import qualified Data.Text                       as T
-import Data.Monoid
-import           Data.Version                    (showVersion)
+import           Data.Monoid
+import qualified Data.Text                  as T
+import           Data.Version               (showVersion)
 import           Data.Void
-import           Paths_pile                      (version)
+import           Debug.Trace
+import           Paths_pile                 (version)
 import           System.Console.CmdArgs
 import           System.IO.HVFS
-import qualified          System.IO.Strict as SIO
+import qualified System.IO.Strict           as SIO
 import           System.Path
 import           Text.Megaparsec
 import           Text.Megaparsec.Char
-import Text.Printf
-import qualified Text.Megaparsec.Char.Lexer      as L
-import Debug.Trace
+import qualified Text.Megaparsec.Char.Lexer as L
+import           Text.Printf
 
 import           Lib
 
@@ -34,9 +34,11 @@ data TodoEntry = TodoEntryHead
   , assignee :: Maybe T.Text
   } | TodoBodyLine T.Text deriving (Show)
 
+isEntryHead :: TodoEntry -> Bool
 isEntryHead (TodoEntryHead _ _) = True
 isEntryHead _                   = False
 
+isBodyLine :: TodoEntry -> Bool
 isBodyLine (TodoBodyLine _ ) = True
 isBodyLine _                 = False
 
@@ -97,17 +99,20 @@ parseComment extension = do
   b <- many anyChar
   return . TodoBodyLine $ T.pack b
 
+inParens = between (symbol "(") (symbol ")")
+
+stringToMaybe t = if T.null t then Nothing else Just t
+
 parseTodoEntryHead :: T.Text -> Parser TodoEntry
 parseTodoEntryHead extension = do
   _ <- manyTill anyChar (symbol $ getCommentForFileType extension)
   _ <- symbol "TODO"
+  -- a <- try (inParens $ many anyChar)
   b <- many anyChar
-  return $ TodoEntryHead [T.pack b] Nothing
+  return $ TodoEntryHead [T.pack b] $ Nothing
 
 parseTodo :: T.Text -> Parser TodoEntry
 parseTodo ext = try (parseTodoEntryHead ext) <|> parseComment ext
-
--- TODO hi hi hi
 
 -- TODO(avi) here's a todo!
 -- this should still be part of the todo
@@ -116,7 +121,7 @@ getAllFiles path = E.catch
   (do
     putStrLn path -- a comment!
     files <- recurseDir SystemFS path
-    let validFiles = filter fileHasValidExtension files
+    let validFiles = filter isValidFile files
     -- TODO make sure it's a file first
     mapM (\f -> SourceFile f . (map T.pack . lines) <$> E.catch (SIO.readFile f) (\(e :: E.IOException) -> print e >> return "")) validFiles)
   (\(e :: E.IOException) ->
@@ -126,12 +131,19 @@ fileHasValidExtension :: FilePath -> Bool
 fileHasValidExtension path =
   any (\ext -> ext `T.isSuffixOf` T.pack path) (map fst fileTypeToComment)
 
+-- TODO(avi) this should be configurable
+ignoreFile :: FilePath -> Bool
+ignoreFile file = let p = T.pack file in
+  T.isInfixOf "node_modules" p || T.isSuffixOf "pb.go" p || T.isSuffixOf "_pb2.py" p
+
 getExtension :: FilePath -> T.Text
 getExtension path = last $ T.splitOn "." (T.pack path)
 
+isValidFile :: FilePath -> Bool
+isValidFile f = fileHasValidExtension f && not (ignoreFile f)
+
 runTodoParser :: SourceFile -> [TodoEntry]
 runTodoParser (SourceFile path ls) =
-  -- FIXME
   let parsedTodoLines = map (parseMaybe . parseTodo $ getExtension path) ls
       groupedTodos = foldl foldFn ([], False) parsedTodoLines in
     fst groupedTodos
@@ -146,7 +158,8 @@ foldFn (todos :: [TodoEntry], currentlyBuildingTodoLines :: Bool) maybeTodo
 
 prettyFormat :: TodoEntry -> String
 prettyFormat (TodoEntryHead l a) =
-  printf "Assignee: %s\n%s" (fromMaybe "None" a) (unlines $ map (T.unpack) l)
+  printf "Assignee: %s\n%s" (fromMaybe "None" a) (unlines $ map T.unpack l)
+prettyFormat (TodoBodyLine _) = error "Invalid type for prettyFormat"
 
 main :: IO ()
 main = do
