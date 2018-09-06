@@ -17,6 +17,7 @@ import qualified          System.IO.Strict as SIO
 import           System.Path
 import           Text.Megaparsec
 import           Text.Megaparsec.Char
+import Text.Printf
 import qualified Text.Megaparsec.Char.Lexer      as L
 import Debug.Trace
 
@@ -143,6 +144,10 @@ foldFn (todos :: [TodoEntry], currentlyBuildingTodoLines :: Bool) maybeTodo
     (init todos ++ [combineTodo (last todos) (fromJust maybeTodo)], True)
   | otherwise = (todos, False)
 
+prettyFormat :: TodoEntry -> String
+prettyFormat (TodoEntryHead l a) =
+  printf "Assignee: %s\n%s" (fromMaybe "None" a) (unlines $ map (T.unpack) l)
+
 main :: IO ()
 main = do
   userArgs <- cmdArgs argParser
@@ -150,6 +155,6 @@ main = do
   if isJust directory then do
     allFiles <- getAllFiles $ fromJust directory
     let parsedTodos = concatMap runTodoParser allFiles
-    print $ take 50 parsedTodos
+    mapM_ (putStrLn . prettyFormat) $ take 50 parsedTodos
   else
     putStrLn "no directory supplied"
