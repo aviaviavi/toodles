@@ -34,6 +34,7 @@ executables:
     - filepath
     - MissingH
     - cmdargs
+    - strict
 
 # tests:
 #   pile-test:
