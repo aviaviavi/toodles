@@ -107,9 +107,9 @@ parseTodoEntryHead :: T.Text -> Parser TodoEntry
 parseTodoEntryHead extension = do
   _ <- manyTill anyChar (symbol $ getCommentForFileType extension)
   _ <- symbol "TODO"
-  -- a <- try (inParens $ many anyChar)
+  a <- optional $ try (inParens $ many (noneOf [')']))
   b <- many anyChar
-  return $ TodoEntryHead [T.pack b] $ Nothing
+  return $ TodoEntryHead [T.pack b] $ stringToMaybe . T.strip . T.pack $ fromMaybe "" a
 
 parseTodo :: T.Text -> Parser TodoEntry
 parseTodo ext = try (parseTodoEntryHead ext) <|> parseComment ext
