@@ -51,19 +51,27 @@ data SourceFile = SourceFile {
   sourceLines :: [T.Text]
                              } deriving (Show)
 
+newtype AssigneeFilterRegex = AssigneeFilterRegex T.Text deriving (Show, Data, Eq)
+
+data SearchFilter = AssigneeFilter AssigneeFilterRegex deriving (Show, Data, Eq)
+
 data ToodlesArgs = ToodlesArgs
   { project_root :: Maybe FilePath
+  , assignee_search :: Maybe SearchFilter
   } deriving (Show, Data, Typeable, Eq)
 
 argParser :: ToodlesArgs
 argParser =
   ToodlesArgs
-  {project_root = def &= typFile &= help "Root directory of your project"} &=
+  {project_root = def &= typFile &= help "Root directory of your project"
+  , assignee_search = def &= help "Filter todo's by assignee"
+  } &=
   summary ("toodles " ++ showVersion version) &=
   program "toodles" &=
   verbosity &=
   help "Manage TODO's directly from your codebase"
 
+-- TODO(avi) add more language
 fileTypeToComment :: [(T.Text, T.Text)]
 fileTypeToComment =
   [ (".hs", "--")
@@ -162,6 +170,11 @@ prettyFormat (TodoEntryHead l a) =
   printf "Assignee: %s\n%s" (fromMaybe "None" a) (unlines $ map T.unpack l)
 prettyFormat (TodoBodyLine _) = error "Invalid type for prettyFormat"
 
+filterSearch :: Maybe SearchFilter -> (TodoEntry -> Bool)
+filterSearch Nothing = const True
+filterSearch (Just (AssigneeFilter (AssigneeFilterRegex query))) =
+  \entry -> fromMaybe "" (assignee entry) == query
+
 main :: IO ()
 main = do
   userArgs <- cmdArgs argParser
@@ -169,6 +182,7 @@ main = do
   if isJust directory then do
     allFiles <- getAllFiles $ fromJust directory
     let parsedTodos = concatMap runTodoParser allFiles
-    mapM_ (putStrLn . prettyFormat) $ take 50 parsedTodos
+        filteredTodos = filter (filterSearch (assignee_search userArgs)) parsedTodos
+    mapM_ (putStrLn . prettyFormat) $ take 50 filteredTodos
   else
     putStrLn "no directory supplied"
