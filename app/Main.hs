@@ -11,7 +11,7 @@ import qualified Data.Text                  as T
 import           Data.Version               (showVersion)
 import           Data.Void
 import           Debug.Trace
-import           Paths_pile                 (version)
+import           Paths_toodles                 (version)
 import           System.Console.CmdArgs
 import           System.IO.HVFS
 import qualified System.IO.Strict           as SIO
@@ -51,16 +51,16 @@ data SourceFile = SourceFile {
   sourceLines :: [T.Text]
                              } deriving (Show)
 
-data PileArgs = PileArgs
+data ToodlesArgs = ToodlesArgs
   { project_root :: Maybe FilePath
   } deriving (Show, Data, Typeable, Eq)
 
-argParser :: PileArgs
+argParser :: ToodlesArgs
 argParser =
-  PileArgs
+  ToodlesArgs
   {project_root = def &= typFile &= help "Root directory of your project"} &=
-  summary ("pile " ++ showVersion version) &=
-  program "pile" &=
+  summary ("toodles " ++ showVersion version) &=
+  program "toodles" &=
   verbosity &=
   help "Manage TODO's directly from your codebase"
 
@@ -108,18 +108,18 @@ parseTodoEntryHead extension = do
   _ <- manyTill anyChar (symbol $ getCommentForFileType extension)
   _ <- symbol "TODO"
   a <- optional $ try (inParens $ many (noneOf [')']))
+  _ <- optional $ symbol "-"
+  _ <- optional $ symbol ":"
   b <- many anyChar
   return $ TodoEntryHead [T.pack b] $ stringToMaybe . T.strip . T.pack $ fromMaybe "" a
 
 parseTodo :: T.Text -> Parser TodoEntry
 parseTodo ext = try (parseTodoEntryHead ext) <|> parseComment ext
 
--- TODO(avi) here's a todo!
--- this should still be part of the todo
 getAllFiles :: FilePath -> IO [SourceFile]
 getAllFiles path = E.catch
   (do
-    putStrLn path -- a comment!
+    putStrLn path
     files <- recurseDir SystemFS path
     let validFiles = filter isValidFile files
     -- TODO make sure it's a file first
@@ -148,6 +148,7 @@ runTodoParser (SourceFile path ls) =
       groupedTodos = foldl foldFn ([], False) parsedTodoLines in
     fst groupedTodos
 
+-- TODO(avi) this needs a better name
 foldFn :: ([TodoEntry], Bool) -> Maybe TodoEntry -> ([TodoEntry], Bool)
 foldFn (todos :: [TodoEntry], currentlyBuildingTodoLines :: Bool) maybeTodo
   | isNothing maybeTodo = (todos, False)

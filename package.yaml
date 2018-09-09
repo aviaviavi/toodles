@@ -1,6 +1,6 @@
-name:                pile
+name:                toodles
 version:             0.1.0.0
-github:              "aviaviavi/pile"
+github:              "aviaviavi/toodles"
 license:             MIT
 author:              "Avi Press"
 maintainer:          "mail@avi.press"
@@ -10,7 +10,7 @@ extra-source-files:
 - README.md
 
 synopsis:            Manage the TODO entries in your code
-description:         See the README on GitHub at <https://github.com/aviaviavi/pile#readme>
+description:         See the README on GitHub at <https://github.com/aviaviavi/toodles#readme>
 
 dependencies:
 - base >= 4.7 && < 5
@@ -19,7 +19,7 @@ library:
   source-dirs: src
 
 executables:
-  pile-exe:
+  toodles-exe:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
@@ -27,7 +27,7 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - pile
+    - toodles
     - text
     - megaparsec
     - directory
@@ -37,7 +37,7 @@ executables:
     - strict
 
 # tests:
-#   pile-test:
+#   toodles-test:
 #     main:                Spec.hs
 #     source-dirs:         test
 #     ghc-options:
@@ -45,4 +45,4 @@ executables:
 #     - -rtsopts
 #     - -with-rtsopts=-N
 #     dependencies:
-#     - pile
+#     - toodles
