@@ -13,6 +13,8 @@ import           Data.Aeson
 import           Data.IORef
 import           Data.Maybe
 import           Data.Monoid
+import qualified Data.ByteString.Lazy.Char8 as B8S
+import qualified Data.ByteString.Lazy as BS
 import           Data.Proxy
 import           Data.Text                  (Text)
 import qualified Data.Text                  as T
@@ -20,6 +22,7 @@ import           Data.Version               (showVersion)
 import           Data.Void
 import           Debug.Trace
 import           GHC.Generics
+import Network.HTTP.Types (status200)
 import           Network.Wai
 import           Network.Wai.Handler.Warp
 import           Paths_toodles              (version)
@@ -58,13 +61,10 @@ instance ToJSON TodoEntry
 instance FromJSON TodoListResult
 instance ToJSON TodoListResult
 
-type StaticAPI = "static" :> Raw
-
--- staticAPI :: Proxy StaticAPI
--- staticAPI = Proxy
-
-type ToodlesAPI = "todos" :> Get '[JSON] TodoListResult :<|>
-  StaticAPI
+type ToodlesAPI =
+  "todos" :> Get '[JSON] TodoListResult :<|>
+  Raw :<|> -- file server
+  Raw -- root html page
 
 data ToodlesState = ToodlesState {
   results :: IORef TodoListResult
@@ -73,9 +73,17 @@ data ToodlesState = ToodlesState {
 toodlesAPI :: Proxy ToodlesAPI
 toodlesAPI = Proxy
 
+root :: Application
+root _ res = readFile "./web/html/index.html" >>= \r -> res $
+  responseLBS
+  status200
+  []
+  (B8S.pack r)
+
 server :: ToodlesState -> Server ToodlesAPI
 server s = liftIO (getFullSearchResults s) :<|>
-  serveDirectoryFileServer "web"
+  serveDirectoryFileServer "web" :<|>
+  return root
 
 app :: ToodlesState -> Application
 app s = (serve toodlesAPI) $ server s

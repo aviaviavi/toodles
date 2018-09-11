@@ -41,6 +41,8 @@ executables:
     - aeson
     - wai
     - warp
+    - http-types
+    - bytestring
 
 # tests:
 #   toodles-test:
