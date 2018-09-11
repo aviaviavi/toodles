@@ -58,7 +58,13 @@ instance ToJSON TodoEntry
 instance FromJSON TodoListResult
 instance ToJSON TodoListResult
 
-type ToodlesAPI = "todos" :> Get '[JSON] TodoListResult
+type StaticAPI = "static" :> Raw
+
+-- staticAPI :: Proxy StaticAPI
+-- staticAPI = Proxy
+
+type ToodlesAPI = "todos" :> Get '[JSON] TodoListResult :<|>
+  StaticAPI
 
 data ToodlesState = ToodlesState {
   results :: IORef TodoListResult
@@ -68,10 +74,11 @@ toodlesAPI :: Proxy ToodlesAPI
 toodlesAPI = Proxy
 
 server :: ToodlesState -> Server ToodlesAPI
-server s = liftIO $ getFullSearchResults s
+server s = liftIO (getFullSearchResults s) :<|>
+  serveDirectoryFileServer "web"
 
 app :: ToodlesState -> Application
-app s = serve toodlesAPI $ server s
+app s = (serve toodlesAPI) $ server s
 
 isEntryHead :: TodoEntry -> Bool
 isEntryHead (TodoEntryHead _ _) = True
@@ -239,7 +246,7 @@ runFullSearch userArgs =
     return $ TodoListResult [] "no directory supplied"
 
 getFullSearchResults :: ToodlesState -> IO TodoListResult
-getFullSearchResults (ToodlesState ref) = readIORef ref
+getFullSearchResults (ToodlesState ref) = putStrLn "reading results..." >> readIORef ref
 
 main :: IO ()
 main = do
