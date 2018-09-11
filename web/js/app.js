@@ -3,7 +3,8 @@ $(document).ready(function() {
     el: '#container',
     data: () => {
       return {
-        todos: []
+        todos: [],
+        todoSearch: ""
       }
     },
     created: function() {

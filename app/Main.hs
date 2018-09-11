@@ -63,7 +63,7 @@ instance ToJSON TodoListResult
 
 type ToodlesAPI =
   "todos" :> Get '[JSON] TodoListResult :<|>
-  Raw :<|> -- file server
+  "static" :> Raw :<|> -- file server
   Raw -- root html page
 
 data ToodlesState = ToodlesState {
@@ -263,6 +263,7 @@ main = do
   if runServer userArgs
     then do
       ref <- newIORef sResults
+      putStrLn "serving on 9001"
       run 9001 $ app $ ToodlesState ref
      else
       mapM_ (putStrLn . prettyFormat) $ todos sResults
