@@ -35,6 +35,12 @@ executables:
     - MissingH
     - cmdargs
     - strict
+    - servant
+    - servant-server
+    - transformers
+    - aeson
+    - wai
+    - warp
 
 # tests:
 #   toodles-test:

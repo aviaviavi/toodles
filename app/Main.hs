@@ -1,17 +1,31 @@
+{-# LANGUAGE DataKinds           #-}
 {-# LANGUAGE DeriveDataTypeable  #-}
+{-# LANGUAGE DeriveGeneric       #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators       #-}
 
 module Main where
 
 import qualified Control.Exception          as E
+import           Control.Monad.IO.Class
+import           Data.Aeson
+import           Data.IORef
 import           Data.Maybe
 import           Data.Monoid
+import           Data.Proxy
+import           Data.Text                  (Text)
 import qualified Data.Text                  as T
 import           Data.Version               (showVersion)
 import           Data.Void
 import           Debug.Trace
-import           Paths_toodles                 (version)
+import           GHC.Generics
+import           Network.Wai
+import           Network.Wai.Handler.Warp
+import           Paths_toodles              (version)
+import           Servant
+import           Servant.API
+import           Servant.API
 import           System.Console.CmdArgs
 import           System.IO.HVFS
 import qualified System.IO.Strict           as SIO
@@ -32,7 +46,32 @@ data CommentedLine = CommentedLine
 data TodoEntry = TodoEntryHead
   { body     :: [T.Text]
   , assignee :: Maybe T.Text
-  } | TodoBodyLine T.Text deriving (Show)
+  } | TodoBodyLine T.Text deriving (Show, Generic)
+
+data TodoListResult = TodoListResult {
+  todos   :: [TodoEntry],
+  message :: T.Text
+                                     } deriving (Show, Generic)
+
+instance FromJSON TodoEntry
+instance ToJSON TodoEntry
+instance FromJSON TodoListResult
+instance ToJSON TodoListResult
+
+type ToodlesAPI = "todos" :> Get '[JSON] TodoListResult
+
+data ToodlesState = ToodlesState {
+  results :: IORef TodoListResult
+                                 }
+
+toodlesAPI :: Proxy ToodlesAPI
+toodlesAPI = Proxy
+
+server :: ToodlesState -> Server ToodlesAPI
+server s = liftIO $ getFullSearchResults s
+
+app :: ToodlesState -> Application
+app s = serve toodlesAPI $ server s
 
 isEntryHead :: TodoEntry -> Bool
 isEntryHead (TodoEntryHead _ _) = True
@@ -56,8 +95,10 @@ newtype AssigneeFilterRegex = AssigneeFilterRegex T.Text deriving (Show, Data, E
 data SearchFilter = AssigneeFilter AssigneeFilterRegex deriving (Show, Data, Eq)
 
 data ToodlesArgs = ToodlesArgs
-  { project_root :: Maybe FilePath
+  { project_root    :: Maybe FilePath
   , assignee_search :: Maybe SearchFilter
+  , limit_results   :: Int
+  , runServer       :: Bool
   } deriving (Show, Data, Typeable, Eq)
 
 argParser :: ToodlesArgs
@@ -65,24 +106,29 @@ argParser =
   ToodlesArgs
   {project_root = def &= typFile &= help "Root directory of your project"
   , assignee_search = def &= help "Filter todo's by assignee"
+  , limit_results = def &= help "Limit number of search results"
+  , runServer = def &= help "Run server"
   } &=
   summary ("toodles " ++ showVersion version) &=
   program "toodles" &=
   verbosity &=
   help "Manage TODO's directly from your codebase"
 
--- TODO(avi) add more language
+-- TODO(avi) add more languages
 fileTypeToComment :: [(T.Text, T.Text)]
 fileTypeToComment =
-  [ (".hs", "--")
-  , (".js", "//")
-  , (".yaml", "#")
+  [ (".cpp", "//")
   , (".go", "//")
-  , (".proto", "//")
-  , (".ts", "//")
-  , (".py", "#")
+  , (".hs", "--")
   , (".java", "//")
-  , (".cpp", "//")
+  , (".js", "//")
+  , (".proto", "//")
+  , (".py", "#")
+  , (".rb", "#")
+  , (".scala", "//")
+  , (".sh", "#")
+  , (".ts", "//")
+  , (".yaml", "#")
   ]
 
 unkownMarker :: T.Text
@@ -175,14 +221,34 @@ filterSearch Nothing = const True
 filterSearch (Just (AssigneeFilter (AssigneeFilterRegex query))) =
   \entry -> fromMaybe "" (assignee entry) == query
 
-main :: IO ()
-main = do
-  userArgs <- cmdArgs argParser
-  let directory  = project_root userArgs
+limitSearch :: [TodoEntry] -> Int -> [TodoEntry]
+limitSearch results limit =
+  if limit == 0 then results else take limit results
+
+runFullSearch :: ToodlesArgs -> IO TodoListResult
+runFullSearch userArgs =
+  let directory  = project_root userArgs in
   if isJust directory then do
     allFiles <- getAllFiles $ fromJust directory
     let parsedTodos = concatMap runTodoParser allFiles
         filteredTodos = filter (filterSearch (assignee_search userArgs)) parsedTodos
-    mapM_ (putStrLn . prettyFormat) $ take 50 filteredTodos
-  else
+        results = limitSearch filteredTodos $ limit_results userArgs
+    return $ TodoListResult results ""
+  else do
     putStrLn "no directory supplied"
+    return $ TodoListResult [] "no directory supplied"
+
+getFullSearchResults :: ToodlesState -> IO TodoListResult
+getFullSearchResults (ToodlesState ref) = readIORef ref
+
+main :: IO ()
+main = do
+  userArgs <- cmdArgs argParser
+  sResults <- runFullSearch userArgs
+  if runServer userArgs
+    then do
+      ref <- newIORef sResults
+      run 9001 $ app $ ToodlesState ref
+     else
+      mapM_ (putStrLn . prettyFormat) $ todos sResults
+  return ()
