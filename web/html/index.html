@@ -1,0 +1,23 @@
+<head>
+    <script src="https://npmcdn.com/vue/dist/vue.js"></script>
+    <script
+        src="https://code.jquery.com/jquery-3.3.1.min.js"
+        integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+        crossorigin="anonymous"></script>
+    <script src="/static/js/app.js"></script>
+</head>
+
+<body>
+    <div id="container" class="container">
+        <h4>Toodles</h4>
+        <input name="todo-search" type="text">
+        <label for="todo-search">Filter</label>
+        <div class="todo-list" v-for="todo in todos">
+            <div class="todo-item">
+                <div class="todo-item-assignee">{{ todo.assignee }}</div>
+                <div class="todo-item-body">{{ todo.body }}</div>
+                <div></div>
+            </div>
+        </div>
+    </div>
+</body>
