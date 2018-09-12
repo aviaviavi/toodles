@@ -1,6 +1,6 @@
 $(document).ready(function() {
   new Vue({
-    el: '#container',
+    el: '#top-div',
     data: () => {
       return {
         todos: [],

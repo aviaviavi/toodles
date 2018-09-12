@@ -5,18 +5,32 @@
         integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
         crossorigin="anonymous"></script>
     <script src="/static/js/app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.1/css/bulma.min.css">
+    <link rel="stylesheet" href="/static/css/toodles.css">
 </head>
 
 <body>
-    <div id="container" class="container">
-        <h4>Toodles</h4>
-        <label for="todo-search">Filter</label>
-        <input name="todo-search" type="text" v-model="todoSearch">
-        <ul class="todo-list" v-for="todo in todos" v-if="todo.body.indexOf(todoSearch) !== -1 || (todo.assignee || '').indexOf(todoSearch) !== -1">
-            <li class="todo-item">
-                <div class="todo-item-assignee">{{ todo.assignee || "None" }}</div>
-                <div class="todo-item-body">{{ todo.body }}</div>
-            </li>
-        </ul>
+    <div id="top-div">
+        <nav class="navbar" role="navigation" aria-label="main navigation">
+            <div class="navbar-brand">
+                <a class="navbar-item" href="#">
+                    Toodles
+                </a>
+            </div>
+        </nav>
+        <div class="columns">
+            <div class="side-bar column is-one-quarter">
+                <label for="todo-search">Filter</label>
+                <input class="input" name="todo-search" type="text" v-model="todoSearch">
+            </div>
+            <div class="main-container container content column is-three-quarters">
+                <ul class="todo-list" v-for="todo in todos" v-if="todo.body.indexOf(todoSearch) !== -1 || (todo.assignee || '').indexOf(todoSearch) !== -1">
+                    <li class="todo-item">
+                        <div class="todo-item-assignee">{{ todo.assignee || "None" }}</div>
+                        <div class="todo-item-body">{{ todo.body }}</div>
+                    </li>
+                </ul>
+            </div>
+        </div>
     </div>
 </body>

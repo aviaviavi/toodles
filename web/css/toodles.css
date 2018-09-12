@@ -1,0 +1,14 @@
+.navbar {
+    background-color: #346df0;
+    width: 100%;
+}
+
+.navbar-item {
+    margin-left: 1em;
+    color: white;
+}
+
+.side-bar {
+    padding-left: 2em;
+}
+
