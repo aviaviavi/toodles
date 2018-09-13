@@ -40,12 +40,6 @@ import           Text.Printf
 
 import           Lib
 
--- data CommentedLine = CommentedLine
---   { sourceFile  :: FilePath
---   , lineNumber  :: Integer
---   , commentText :: T.Text
---   } deriving (Show)
-
 type LineNumber = Integer
 
 data TodoEntry = TodoEntryHead

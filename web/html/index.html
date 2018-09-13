@@ -24,6 +24,7 @@
                 <input class="input filter-todos" name="todo-search" type="text" v-model="todoSearch">
             </div>
             <div class="main-container container content column is-three-quarters">
+                <div class="loading-spinner" v-show="loading"><a class="button is-loading">Loading</a> Loading TODO's. If your project is large, this can take a few moments...</div>
                 <ul class="todo-list" v-for="todo in todos" v-if="todo.body.indexOf(todoSearch) !== -1 || (todo.assignee || '').indexOf(todoSearch) !== -1">
                     <li class="todo-item">
                         <div class="todo-item-assignee">{{ todo.assignee || "None" }}</div>

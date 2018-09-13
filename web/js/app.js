@@ -4,7 +4,8 @@ $(document).ready(function() {
     data: () => {
       return {
         todos: [],
-        todoSearch: ""
+        todoSearch: "",
+        loading: true
       }
     },
     created: function() {
@@ -23,6 +24,7 @@ $(document).ready(function() {
             }
           })
           console.log("todos", this.todos)
+          this.loading = false
         }.bind(this)
       })
     }

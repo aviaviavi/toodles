@@ -24,3 +24,11 @@
 .filter-todos {
     width: 95%;
 }
+
+.loading-spinner {
+    line-height: 2em;
+}
+
+.loading-spinner a {
+    border: none;
+}
