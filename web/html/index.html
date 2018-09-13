@@ -18,7 +18,7 @@
                 </a>
             </div>
         </nav>
-        <div class="columns">
+        <div class="columns content-container">
             <div class="side-bar column is-one-quarter">
                 <label for="todo-search">Filter</label>
                 <input class="input" name="todo-search" type="text" v-model="todoSearch">
@@ -27,6 +27,7 @@
                 <ul class="todo-list" v-for="todo in todos" v-if="todo.body.indexOf(todoSearch) !== -1 || (todo.assignee || '').indexOf(todoSearch) !== -1">
                     <li class="todo-item">
                         <div class="todo-item-assignee">{{ todo.assignee || "None" }}</div>
+                        <div class="todo-item-location">{{ todo.sourceFile }}:{{ todo.lineNumber}}</div>
                         <div class="todo-item-body">{{ todo.body }}</div>
                     </li>
                 </ul>

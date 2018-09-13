@@ -10,25 +10,22 @@ module Main where
 import qualified Control.Exception          as E
 import           Control.Monad.IO.Class
 import           Data.Aeson
+import qualified Data.ByteString.Lazy.Char8 as B8S
 import           Data.IORef
 import           Data.Maybe
 import           Data.Monoid
-import qualified Data.ByteString.Lazy.Char8 as B8S
-import qualified Data.ByteString.Lazy as BS
 import           Data.Proxy
-import           Data.Text                  (Text)
 import qualified Data.Text                  as T
 import           Data.Version               (showVersion)
 import           Data.Void
 import           Debug.Trace
+import System.Path.NameManip
 import           GHC.Generics
-import Network.HTTP.Types (status200)
+import           Network.HTTP.Types         (status200)
 import           Network.Wai
 import           Network.Wai.Handler.Warp
 import           Paths_toodles              (version)
 import           Servant
-import           Servant.API
-import           Servant.API
 import           System.Console.CmdArgs
 import           System.IO.HVFS
 import qualified System.IO.Strict           as SIO
@@ -40,15 +37,19 @@ import           Text.Printf
 
 import           Lib
 
-data CommentedLine = CommentedLine
-  { sourceFile  :: FilePath
-  , lineNumber  :: Integer
-  , commentText :: T.Text
-  } deriving (Show)
+-- data CommentedLine = CommentedLine
+--   { sourceFile  :: FilePath
+--   , lineNumber  :: Integer
+--   , commentText :: T.Text
+--   } deriving (Show)
+
+type LineNumber = Integer
 
 data TodoEntry = TodoEntryHead
   { body     :: [T.Text]
   , assignee :: Maybe T.Text
+  , sourceFile :: FilePath
+  , lineNumber :: LineNumber
   } | TodoBodyLine T.Text deriving (Show, Generic)
 
 data TodoListResult = TodoListResult {
@@ -89,7 +90,7 @@ app :: ToodlesState -> Application
 app s = (serve toodlesAPI) $ server s
 
 isEntryHead :: TodoEntry -> Bool
-isEntryHead (TodoEntryHead _ _) = True
+isEntryHead (TodoEntryHead _ _ _ _) = True
 isEntryHead _                   = False
 
 isBodyLine :: TodoEntry -> Bool
@@ -97,20 +98,20 @@ isBodyLine (TodoBodyLine _ ) = True
 isBodyLine _                 = False
 
 combineTodo :: TodoEntry -> TodoEntry -> TodoEntry
-combineTodo (TodoEntryHead b a) (TodoBodyLine l) = TodoEntryHead (b ++ [l]) a
+combineTodo (TodoEntryHead b a p n) (TodoBodyLine l) = TodoEntryHead (b ++ [l]) a p n
 combineTodo _ _ = error "Can't combine todoEntry of these types"
 
-data SourceFile = SourceFile {
-  fullPath    :: FilePath,
-  sourceLines :: [T.Text]
-                             } deriving (Show)
+data SourceFile = SourceFile
+  { fullPath    :: FilePath
+  , sourceLines :: [T.Text]
+  } deriving (Show)
 
 newtype AssigneeFilterRegex = AssigneeFilterRegex T.Text deriving (Show, Data, Eq)
 
 data SearchFilter = AssigneeFilter AssigneeFilterRegex deriving (Show, Data, Eq)
 
 data ToodlesArgs = ToodlesArgs
-  { project_root    :: Maybe FilePath
+  { project_root    :: FilePath
   , assignee_search :: Maybe SearchFilter
   , limit_results   :: Int
   , runServer       :: Bool
@@ -172,23 +173,23 @@ inParens = between (symbol "(") (symbol ")")
 
 stringToMaybe t = if T.null t then Nothing else Just t
 
-parseTodoEntryHead :: T.Text -> Parser TodoEntry
-parseTodoEntryHead extension = do
-  _ <- manyTill anyChar (symbol $ getCommentForFileType extension)
+parseTodoEntryHead :: FilePath -> LineNumber -> Parser TodoEntry
+parseTodoEntryHead path lineNum = do
+  _ <- manyTill anyChar (symbol . getCommentForFileType $ getExtension path)
   _ <- symbol "TODO"
   a <- optional $ try (inParens $ many (noneOf [')']))
   _ <- optional $ symbol "-"
   _ <- optional $ symbol ":"
   b <- many anyChar
-  return $ TodoEntryHead [T.pack b] $ stringToMaybe . T.strip . T.pack $ fromMaybe "" a
+  return $ TodoEntryHead [T.pack b] (stringToMaybe . T.strip . T.pack $ fromMaybe "" a) path lineNum
 
-parseTodo :: T.Text -> Parser TodoEntry
-parseTodo ext = try (parseTodoEntryHead ext) <|> parseComment ext
+parseTodo :: FilePath -> LineNumber -> Parser TodoEntry
+parseTodo path lineNum = try (parseTodoEntryHead path lineNum) <|> (parseComment $ getExtension path)
 
 getAllFiles :: FilePath -> IO [SourceFile]
 getAllFiles path = E.catch
   (do
-    putStrLn path
+    putStrLn $ printf "Running toodles for path: %s" path
     files <- recurseDir SystemFS path
     let validFiles = filter isValidFile files
     -- TODO make sure it's a file first
@@ -213,13 +214,12 @@ isValidFile f = fileHasValidExtension f && not (ignoreFile f)
 
 runTodoParser :: SourceFile -> [TodoEntry]
 runTodoParser (SourceFile path ls) =
-  let parsedTodoLines = map (parseMaybe . parseTodo $ getExtension path) ls
-      groupedTodos = foldl foldFn ([], False) parsedTodoLines in
+  let parsedTodoLines = map (\(lineNum, lineText) -> parseMaybe (parseTodo path lineNum) lineText) (zip [1..] ls)
+      groupedTodos = foldl foldTodoHelper ([], False) parsedTodoLines in
     fst groupedTodos
 
--- TODO(avi) this needs a better name
-foldFn :: ([TodoEntry], Bool) -> Maybe TodoEntry -> ([TodoEntry], Bool)
-foldFn (todos :: [TodoEntry], currentlyBuildingTodoLines :: Bool) maybeTodo
+foldTodoHelper :: ([TodoEntry], Bool) -> Maybe TodoEntry -> ([TodoEntry], Bool)
+foldTodoHelper (todos :: [TodoEntry], currentlyBuildingTodoLines :: Bool) maybeTodo
   | isNothing maybeTodo = (todos, False)
   | isEntryHead $ fromJust maybeTodo = (todos ++ [fromJust maybeTodo], True)
   | isBodyLine (fromJust maybeTodo) && currentlyBuildingTodoLines =
@@ -227,8 +227,8 @@ foldFn (todos :: [TodoEntry], currentlyBuildingTodoLines :: Bool) maybeTodo
   | otherwise = (todos, False)
 
 prettyFormat :: TodoEntry -> String
-prettyFormat (TodoEntryHead l a) =
-  printf "Assignee: %s\n%s" (fromMaybe "None" a) (unlines $ map T.unpack l)
+prettyFormat (TodoEntryHead l a p n) =
+  printf "Assignee: %s\n%s:%d\n%s" (fromMaybe "None" a) p n (unlines $ map T.unpack l)
 prettyFormat (TodoBodyLine _) = error "Invalid type for prettyFormat"
 
 filterSearch :: Maybe SearchFilter -> (TodoEntry -> Bool)
@@ -242,23 +242,25 @@ limitSearch results limit =
 
 runFullSearch :: ToodlesArgs -> IO TodoListResult
 runFullSearch userArgs =
-  let directory  = project_root userArgs in
-  if isJust directory then do
-    allFiles <- getAllFiles $ fromJust directory
-    let parsedTodos = concatMap runTodoParser allFiles
-        filteredTodos = filter (filterSearch (assignee_search userArgs)) parsedTodos
-        results = limitSearch filteredTodos $ limit_results userArgs
-    return $ TodoListResult results ""
-  else do
-    putStrLn "no directory supplied"
-    return $ TodoListResult [] "no directory supplied"
+  let directory  = project_root userArgs in do
+  allFiles <- getAllFiles directory
+  let parsedTodos = concatMap runTodoParser allFiles
+      filteredTodos = filter (filterSearch (assignee_search userArgs)) parsedTodos
+      results = limitSearch filteredTodos $ limit_results userArgs
+  return $ TodoListResult results ""
 
 getFullSearchResults :: ToodlesState -> IO TodoListResult
 getFullSearchResults (ToodlesState ref) = putStrLn "reading results..." >> readIORef ref
 
+setAbsolutePath :: ToodlesArgs -> IO ToodlesArgs
+setAbsolutePath args =
+  let pathOrDefault = if T.null . T.pack $ project_root args then "." else project_root args in do
+    absolute <- normalise_path <$> absolute_path pathOrDefault
+    return $ args { project_root = absolute }
+
 main :: IO ()
 main = do
-  userArgs <- cmdArgs argParser
+  userArgs <- cmdArgs argParser >>= setAbsolutePath
   sResults <- runFullSearch userArgs
   if runServer userArgs
     then do
