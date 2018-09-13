@@ -36,6 +36,8 @@ executables:
     - cmdargs
     - strict
     - servant
+    - servant-blaze
+    - blaze-html
     - servant-server
     - transformers
     - aeson

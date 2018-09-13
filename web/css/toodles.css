@@ -15,7 +15,12 @@
 .content-container {
     margin-top: 1em;
 }
+
 .todo-item-location {
     font-size: .7em;
     color: grey;
+}
+
+.filter-todos {
+    width: 95%;
 }

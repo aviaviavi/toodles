@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 043b7aa8d486e4f1bc5bc7ab1c904460ce2a2ebd1f39bcb69f66ffee9ad3c980
+-- hash: 1871ed2e5688f15b8914a0f579232f82d927043da29bc3f50ba459eac7f5e5b5
 
 name:           toodles
 version:        0.1.0.0
@@ -45,6 +45,7 @@ executable toodles-exe
       MissingH
     , aeson
     , base >=4.7 && <5
+    , blaze-html
     , bytestring
     , cmdargs
     , directory
@@ -52,6 +53,7 @@ executable toodles-exe
     , http-types
     , megaparsec
     , servant
+    , servant-blaze
     , servant-server
     , strict
     , text

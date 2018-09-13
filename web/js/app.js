@@ -15,6 +15,7 @@ $(document).ready(function() {
           console.log("here", data)
           this.todos = data.todos.map(t => {
             return {
+              id: t.id,
               assignee: t.assignee,
               body: t.body.join("\n"),
               lineNumber: t.lineNumber,

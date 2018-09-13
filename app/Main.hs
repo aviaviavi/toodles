@@ -13,14 +13,16 @@ import           Data.Aeson
 import qualified Data.ByteString.Lazy.Char8 as B8S
 import           Data.IORef
 import           Data.Maybe
+import           Data.List
 import           Data.Monoid
 import           Data.Proxy
 import qualified Data.Text                  as T
 import           Data.Version               (showVersion)
 import           Data.Void
 import           Debug.Trace
-import System.Path.NameManip
+import Servant.HTML.Blaze
 import           GHC.Generics
+import  qualified Text.Blaze.Html5 as BZ
 import           Network.HTTP.Types         (status200)
 import           Network.Wai
 import           Network.Wai.Handler.Warp
@@ -30,6 +32,7 @@ import           System.Console.CmdArgs
 import           System.IO.HVFS
 import qualified System.IO.Strict           as SIO
 import           System.Path
+import           System.Path.NameManip
 import           Text.Megaparsec
 import           Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
@@ -46,8 +49,10 @@ import           Lib
 type LineNumber = Integer
 
 data TodoEntry = TodoEntryHead
-  { body     :: [T.Text]
-  , assignee :: Maybe T.Text
+  {
+    id         :: Integer
+  , body       :: [T.Text]
+  , assignee   :: Maybe T.Text
   , sourceFile :: FilePath
   , lineNumber :: LineNumber
   } | TodoBodyLine T.Text deriving (Show, Generic)
@@ -65,6 +70,7 @@ instance ToJSON TodoListResult
 type ToodlesAPI =
   "todos" :> Get '[JSON] TodoListResult :<|>
   "static" :> Raw :<|> -- file server
+  "source_file" :> Capture "id" Integer :> Get '[HTML] BZ.Html :<|> -- source file
   Raw -- root html page
 
 data ToodlesState = ToodlesState {
@@ -84,21 +90,22 @@ root _ res = readFile "./web/html/index.html" >>= \r -> res $
 server :: ToodlesState -> Server ToodlesAPI
 server s = liftIO (getFullSearchResults s) :<|>
   serveDirectoryFileServer "web" :<|>
+  showRawFile s :<|>
   return root
 
 app :: ToodlesState -> Application
 app s = (serve toodlesAPI) $ server s
 
 isEntryHead :: TodoEntry -> Bool
-isEntryHead (TodoEntryHead _ _ _ _) = True
-isEntryHead _                   = False
+isEntryHead (TodoEntryHead _ _ _ _ _) = True
+isEntryHead _                       = False
 
 isBodyLine :: TodoEntry -> Bool
 isBodyLine (TodoBodyLine _ ) = True
 isBodyLine _                 = False
 
 combineTodo :: TodoEntry -> TodoEntry -> TodoEntry
-combineTodo (TodoEntryHead b a p n) (TodoBodyLine l) = TodoEntryHead (b ++ [l]) a p n
+combineTodo (TodoEntryHead i b a p n) (TodoBodyLine l) = TodoEntryHead i (b ++ [l]) a p n
 combineTodo _ _ = error "Can't combine todoEntry of these types"
 
 data SourceFile = SourceFile
@@ -181,7 +188,7 @@ parseTodoEntryHead path lineNum = do
   _ <- optional $ symbol "-"
   _ <- optional $ symbol ":"
   b <- many anyChar
-  return $ TodoEntryHead [T.pack b] (stringToMaybe . T.strip . T.pack $ fromMaybe "" a) path lineNum
+  return $ TodoEntryHead 0 [T.pack b] (stringToMaybe . T.strip . T.pack $ fromMaybe "" a) path lineNum
 
 parseTodo :: FilePath -> LineNumber -> Parser TodoEntry
 parseTodo path lineNum = try (parseTodoEntryHead path lineNum) <|> (parseComment $ getExtension path)
@@ -227,7 +234,7 @@ foldTodoHelper (todos :: [TodoEntry], currentlyBuildingTodoLines :: Bool) maybeT
   | otherwise = (todos, False)
 
 prettyFormat :: TodoEntry -> String
-prettyFormat (TodoEntryHead l a p n) =
+prettyFormat (TodoEntryHead _ l a p n) =
   printf "Assignee: %s\n%s:%d\n%s" (fromMaybe "None" a) p n (unlines $ map T.unpack l)
 prettyFormat (TodoBodyLine _) = error "Invalid type for prettyFormat"
 
@@ -247,10 +254,22 @@ runFullSearch userArgs =
   let parsedTodos = concatMap runTodoParser allFiles
       filteredTodos = filter (filterSearch (assignee_search userArgs)) parsedTodos
       results = limitSearch filteredTodos $ limit_results userArgs
-  return $ TodoListResult results ""
+      indexedResults = map (\(i, r) -> r {Main.id = i}) $ zip [1..] results
+  return $ TodoListResult indexedResults ""
 
 getFullSearchResults :: ToodlesState -> IO TodoListResult
 getFullSearchResults (ToodlesState ref) = putStrLn "reading results..." >> readIORef ref
+
+showRawFile :: ToodlesState -> Integer -> Handler BZ.Html
+showRawFile (ToodlesState ref) entryId = do
+  (TodoListResult r _) <- liftIO $ readIORef ref
+  let entry = find (\t -> Main.id t == entryId) r
+  liftIO $ maybe (return "Not found") (\e -> addAnchors <$> readFile (sourceFile e)) entry
+
+addAnchors :: String -> BZ.Html
+addAnchors s =
+  let sourceLines = zip [1..] $ lines s in
+  BZ.preEscapedToHtml $ (unlines $ map (\(i, l) -> printf "<pre><a name=\"line-%s\">%s</a></pre>" (show i) l) sourceLines)
 
 setAbsolutePath :: ToodlesArgs -> IO ToodlesArgs
 setAbsolutePath args =
