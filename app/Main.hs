@@ -8,31 +8,34 @@
 module Main where
 
 import qualified Control.Exception          as E
+import           Control.Monad
+
 import           Control.Monad.IO.Class
 import           Data.Aeson
 import qualified Data.ByteString.Lazy.Char8 as B8S
 import           Data.IORef
-import           Data.Maybe
 import           Data.List
+import           Data.Maybe
+import  Text.Read
 import           Data.Monoid
 import           Data.Proxy
 import qualified Data.Text                  as T
 import           Data.Version               (showVersion)
 import           Data.Void
 import           Debug.Trace
-import Servant.HTML.Blaze
 import           GHC.Generics
-import  qualified Text.Blaze.Html5 as BZ
 import           Network.HTTP.Types         (status200)
 import           Network.Wai
 import           Network.Wai.Handler.Warp
 import           Paths_toodles              (version)
 import           Servant
+import           Servant.HTML.Blaze
 import           System.Console.CmdArgs
 import           System.IO.HVFS
 import qualified System.IO.Strict           as SIO
 import           System.Path
 import           System.Path.NameManip
+import qualified Text.Blaze.Html5           as BZ
 import           Text.Megaparsec
 import           Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
@@ -49,6 +52,8 @@ data TodoEntry = TodoEntryHead
   , assignee   :: Maybe T.Text
   , sourceFile :: FilePath
   , lineNumber :: LineNumber
+  , priority   :: Maybe Integer
+  , customAttributes :: [(T.Text, T.Text)]
   } | TodoBodyLine T.Text deriving (Show, Generic)
 
 data TodoListResult = TodoListResult {
@@ -62,7 +67,7 @@ instance FromJSON TodoListResult
 instance ToJSON TodoListResult
 
 type ToodlesAPI =
-  "todos" :> Get '[JSON] TodoListResult :<|>
+  "todos" :> QueryFlag "recompute" :> Get '[JSON] TodoListResult :<|>
   "static" :> Raw :<|> -- file server
   "source_file" :> Capture "id" Integer :> Get '[HTML] BZ.Html :<|> -- source file
   Raw -- root html page
@@ -82,7 +87,7 @@ root _ res = readFile "./web/html/index.html" >>= \r -> res $
   (B8S.pack r)
 
 server :: ToodlesState -> Server ToodlesAPI
-server s = liftIO (getFullSearchResults s) :<|>
+server s = liftIO . getFullSearchResults s :<|>
   serveDirectoryFileServer "web" :<|>
   showRawFile s :<|>
   return root
@@ -91,15 +96,15 @@ app :: ToodlesState -> Application
 app s = (serve toodlesAPI) $ server s
 
 isEntryHead :: TodoEntry -> Bool
-isEntryHead (TodoEntryHead _ _ _ _ _) = True
-isEntryHead _                       = False
+isEntryHead (TodoEntryHead _ _ _ _ _ _ _) = True
+isEntryHead _                           = False
 
 isBodyLine :: TodoEntry -> Bool
 isBodyLine (TodoBodyLine _ ) = True
 isBodyLine _                 = False
 
 combineTodo :: TodoEntry -> TodoEntry -> TodoEntry
-combineTodo (TodoEntryHead i b a p n) (TodoBodyLine l) = TodoEntryHead i (b ++ [l]) a p n
+combineTodo (TodoEntryHead i b a p n priority attrs) (TodoBodyLine l) = TodoEntryHead i (b ++ [l]) a p n priority attrs
 combineTodo _ _ = error "Can't combine todoEntry of these types"
 
 data SourceFile = SourceFile
@@ -170,19 +175,49 @@ parseComment extension = do
   b <- many anyChar
   return . TodoBodyLine $ T.pack b
 
+integer :: Parser Integer
+integer = lexeme $ L.signed space L.decimal
+
+parsePriority :: Parser Integer
+parsePriority = do
+  _ <- symbol "p="
+  integer
+
+parseAssignee :: Parser String
+parseAssignee = many (noneOf [')', '|', '='])
+
+-- TODO fix and type this better
+parseDetails :: T.Text -> (Maybe T.Text, Maybe T.Text, [(T.Text, T.Text)])
+parseDetails toParse =
+  let tokens = T.splitOn "|" toParse
+      a = find (\t -> (not (T.null t)) && (not (T.isInfixOf "=" t))) tokens
+      allDetails =
+        map (\[a, b] -> (a, b)) $
+        filter (\t -> length t == 2) $ map (T.splitOn "=") tokens
+      priority = snd <$> (find (\t -> (T.strip $ fst t) == "p") allDetails)
+      filteredDetails = filter (\t -> (T.strip $ fst t) /= "p") allDetails
+  in (a, priority, filteredDetails)
+
 inParens = between (symbol "(") (symbol ")")
 
 stringToMaybe t = if T.null t then Nothing else Just t
+
+fst3 (x, _, _) = x
+snd3 (_, x, _) = x
+thd3 (_, _, x) = x
 
 parseTodoEntryHead :: FilePath -> LineNumber -> Parser TodoEntry
 parseTodoEntryHead path lineNum = do
   _ <- manyTill anyChar (symbol . getCommentForFileType $ getExtension path)
   _ <- symbol "TODO"
-  a <- optional $ try (inParens $ many (noneOf [')']))
+  details <- optional $ try (inParens $ many (noneOf [')', '(']))
+  let parsedDetails = parseDetails . T.pack <$> details
+      priority = (readMaybe . T.unpack) =<< (snd3 =<< parsedDetails)
+      otherDetails = maybe [] thd3 parsedDetails
   _ <- optional $ symbol "-"
   _ <- optional $ symbol ":"
   b <- many anyChar
-  return $ TodoEntryHead 0 [T.pack b] (stringToMaybe . T.strip . T.pack $ fromMaybe "" a) path lineNum
+  return $ TodoEntryHead 0 [T.pack b] (stringToMaybe . T.strip $ fromMaybe "" (fst3 =<< parsedDetails)) path lineNum priority otherDetails
 
 parseTodo :: FilePath -> LineNumber -> Parser TodoEntry
 parseTodo path lineNum = try (parseTodoEntryHead path lineNum) <|> (parseComment $ getExtension path)
@@ -193,7 +228,7 @@ getAllFiles path = E.catch
     putStrLn $ printf "Running toodles for path: %s" path
     files <- recurseDir SystemFS path
     let validFiles = filter isValidFile files
-    -- TODO make sure it's a file first
+    -- TODO(p=3|avi|deadline=soon) make sure it's a file first
     mapM (\f -> SourceFile f . (map T.pack . lines) <$> E.catch (SIO.readFile f) (\(e :: E.IOException) -> print e >> return "")) validFiles)
   (\(e :: E.IOException) ->
      putStrLn ("Error reading " ++ path ++ ": " ++ show e) >> return [])
@@ -202,7 +237,7 @@ fileHasValidExtension :: FilePath -> Bool
 fileHasValidExtension path =
   any (\ext -> ext `T.isSuffixOf` T.pack path) (map fst fileTypeToComment)
 
--- TODO(avi) this should be configurable
+-- TODO(avi|p=1) this should be configurable
 ignoreFile :: FilePath -> Bool
 ignoreFile file = let p = T.pack file in
   T.isInfixOf "node_modules" p || T.isSuffixOf "pb.go" p || T.isSuffixOf "_pb2.py" p
@@ -228,8 +263,8 @@ foldTodoHelper (todos :: [TodoEntry], currentlyBuildingTodoLines :: Bool) maybeT
   | otherwise = (todos, False)
 
 prettyFormat :: TodoEntry -> String
-prettyFormat (TodoEntryHead _ l a p n) =
-  printf "Assignee: %s\n%s:%d\n%s" (fromMaybe "None" a) p n (unlines $ map T.unpack l)
+prettyFormat (TodoEntryHead _ l a p n priority _) =
+  printf "Assignee: %s\n%s%s:%d\n%s" (fromMaybe "None" a) (maybe "" (\x -> "Priority: " ++ show x ++ "\n") priority) p n (unlines $ map T.unpack l)
 prettyFormat (TodoBodyLine _) = error "Invalid type for prettyFormat"
 
 filterSearch :: Maybe SearchFilter -> (TodoEntry -> Bool)
@@ -251,8 +286,17 @@ runFullSearch userArgs =
       indexedResults = map (\(i, r) -> r {Main.id = i}) $ zip [1..] results
   return $ TodoListResult indexedResults ""
 
-getFullSearchResults :: ToodlesState -> IO TodoListResult
-getFullSearchResults (ToodlesState ref) = putStrLn "reading results..." >> readIORef ref
+getFullSearchResults :: ToodlesState -> Bool -> IO TodoListResult
+getFullSearchResults (ToodlesState ref) recompute =
+  if recompute
+  then do
+    putStrLn "refreshing todo's"
+    userArgs <- cmdArgs argParser >>= setAbsolutePath
+    sResults <- runFullSearch userArgs
+    _ <- atomicModifyIORef' ref (const (sResults, sResults))
+    return sResults
+  else
+    putStrLn "cached read" >> readIORef ref
 
 showRawFile :: ToodlesState -> Integer -> Handler BZ.Html
 showRawFile (ToodlesState ref) entryId = do

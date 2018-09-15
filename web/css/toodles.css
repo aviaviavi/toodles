@@ -32,3 +32,11 @@
 .loading-spinner a {
     border: none;
 }
+
+.refresh {
+    cursor: pointer;
+}
+
+.refresh:active {
+    color: grey;
+}
