@@ -45,7 +45,7 @@ $(document).ready(function() {
             error: function() {
               this.loading = false
               alert("Error! D: Check your connection to the server")
-            }
+            }.bind(this)
           })
         }.bind(this)
       }
