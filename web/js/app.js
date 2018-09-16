@@ -10,7 +10,9 @@ $(document).ready(function() {
         todoSearch: "",
         loading: true,
         priorityFilter: "any",
-        sortMultiplier: {'priority': 1}
+        sortMultiplier: {'priority': 1},
+        customSortSelected: '',
+        customAttributeKeys: []
       }
     },
     created: function() {
@@ -47,6 +49,12 @@ $(document).ready(function() {
               if (!recompute) {
                 this.sortTodos('priority')
               }
+
+              this.customAttributeKeys = Array.from(new Set([].concat.apply([], this.todos.map(t => {
+                return Object.keys(t.customAttributes)
+              }))))
+
+              this.customAttributeKeys.sort()
             }.bind(this),
             error: function() {
               this.loading = false
@@ -56,18 +64,32 @@ $(document).ready(function() {
         }.bind(this)
       },
 
-      // TODO(avi|p=2) make sorts persist refreshes
+      // TODO(avi|p=2|key=a val) make sorts persist refreshes
       sortTodos: function(sortField) {
-        console.log("sort", this.sortMultiplier)
+        if (!sortField || typeof sortField !== 'string') {
+          sortField = this.customSortSelected
+        }
         // multiplier for custom sort val that does asc / desc sort
         const multiplier = this.sortMultiplier[sortField] || 1
-        // so we keep nulls at the end always when sorting
-        const valDefault = multiplier > 0 ? Number.MAX_SAFE_INTEGER : Number.MIN_SAFE_INTEGER
-
         if (sortField === 'priority') {
+          // so we keep nulls at the end always when sorting
+          const valDefault = multiplier > 0 ? Number.MAX_SAFE_INTEGER : Number.MIN_SAFE_INTEGER
           this.todos.sort(function(a, b) {
             const _a = (a.priority || valDefault)
             const _b = (b.priority || valDefault)
+            if (_a < _b) {
+              return multiplier * -1
+            } else if (_a > _b) {
+              return multiplier * 1
+            }
+            return 0
+          })
+        } else { // custom
+          // so we keep nulls at the end always when sorting
+          const valDefault = multiplier > 0 ? "zzzzzzzzzz" : ""
+          this.todos.sort(function(a, b) {
+            const _a = (a.customAttributes[sortField] || valDefault)
+            const _b = (b.customAttributes[sortField] || valDefault)
             if (_a < _b) {
               return multiplier * -1
             } else if (_a > _b) {

@@ -33,13 +33,34 @@
             <div class="side-bar column is-one-quarter">
                 <label for="todo-search">Filter</label>
                 <input placeholder="Search text, assignee, tags" class="input filter-todos" name="todo-search" type="text" v-model="todoSearch">
+
+                <br><br>
+
+                <span>
+                    <div class="select">
+                        <select v-model="customSortSelected" @change="sortTodos">
+                            <option value="">Custom Attribute Sort</option>
+                            <option v-for="attrKey in customAttributeKeys">{{ attrKey }}</option>
+                        </select>
+                    </div>
+                    <button class="button" v-show="customSortSelected" v-on:click="sortTodos">
+                        <span class="icon">
+                            <i class="fa fa-sort"></i>
+                        </span>
+                    </button>
+                </span>
             </div>
             <div class="main-container container content column is-three-quarters">
                 <div class="loading-spinner" v-show="loading"><a class="button is-loading">Loading</a> Loading TODO's. If your project is large, this can take a few moments...</div>
                 <table class="table todo-list is-striped is-hoverable">
                     <thead>
                         <tr>
-                            <td v-on:click="sortTodos('priority')" class="sortable">Priority</td>
+                            <td v-on:click="sortTodos('priority')" class="sortable">
+                                Priority
+                                <span class="icon">
+                                    <i class="fa fa-sort"></i>
+                                </span>
+                            </td>
                             <td>Assignee</td>
                             <td>Body</td>
                             <td>Tags</td>
