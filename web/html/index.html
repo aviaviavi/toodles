@@ -32,7 +32,7 @@
         <div class="columns content-container">
             <div class="side-bar column is-one-quarter">
                 <label for="todo-search">Filter</label>
-                <input placeholder="Search text or assignee" class="input filter-todos" name="todo-search" type="text" v-model="todoSearch">
+                <input placeholder="Search text, assignee, tags" class="input filter-todos" name="todo-search" type="text" v-model="todoSearch">
             </div>
             <div class="main-container container content column is-three-quarters">
                 <div class="loading-spinner" v-show="loading"><a class="button is-loading">Loading</a> Loading TODO's. If your project is large, this can take a few moments...</div>
@@ -49,7 +49,7 @@
                         <td class="todo-item-priority" >
                             <div v-show="todo.priority">{{ todo.priority }}</div>
                         </td>
-                        <td class="todo-item-assignee">{{ todo.assignee || "None" }}</td>
+                        <td class="todo-item-assignee">{{ todo.assignee }}</td>
                         <td class='todo-item-body'>
                             <div class="todo-source-link"><a :href="'/source_file/' + todo.id + '#line-' + todo.lineNumber" target="_blank">{{ todo.sourceFile }}:{{ todo.lineNumber}}</a></div>
                             <div>{{ todo.body }}</div>
