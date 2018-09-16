@@ -1,6 +1,6 @@
-// TODO(avi) - add a refresh button
 // TODO(avi) - add function to remove entries
-// TODO(avi) - sorting functionality
+// TODO(avi|p=1) - sort by custom keys, tags
+// TODO(p=1|key=val|#frontend) format attrs and tags
 $(document).ready(function() {
   new Vue({
     el: '#top-div',
@@ -8,7 +8,9 @@ $(document).ready(function() {
       return {
         todos: [],
         todoSearch: "",
-        loading: true
+        loading: true,
+        priorityFilter: "any",
+        sortMultiplier: {'priority': 1}
       }
     },
     created: function() {
@@ -31,6 +33,7 @@ $(document).ready(function() {
                   lineNumber: t.lineNumber,
                   sourceFile: t.sourceFile,
                   priority: t.priority,
+                  tags: t.tags,
                   customAttributes: t.customAttributes.reduce((acc, curr) => {
                     console.log(acc, curr)
                     acc[curr[0]] = curr[1]
@@ -41,6 +44,9 @@ $(document).ready(function() {
               })
               console.log("todos", this.todos)
               this.loading = false
+              if (!recompute) {
+                this.sortTodos('priority')
+              }
             }.bind(this),
             error: function() {
               this.loading = false
@@ -48,6 +54,32 @@ $(document).ready(function() {
             }.bind(this)
           })
         }.bind(this)
+      },
+
+      // TODO(avi|p=2) make sorts persist refreshes
+      sortTodos: function(sortField) {
+        console.log("sort", this.sortMultiplier)
+        // multiplier for custom sort val that does asc / desc sort
+        const multiplier = this.sortMultiplier[sortField] || 1
+        // so we keep nulls at the end always when sorting
+        const valDefault = multiplier > 0 ? Number.MAX_SAFE_INTEGER : Number.MIN_SAFE_INTEGER
+
+        if (sortField === 'priority') {
+          this.todos.sort(function(a, b) {
+            const _a = (a.priority || valDefault)
+            const _b = (b.priority || valDefault)
+            if (_a < _b) {
+              return multiplier * -1
+            } else if (_a > _b) {
+              return multiplier * 1
+            }
+            return 0
+          })
+        }
+
+        this.sortMultiplier[sortField] = multiplier * -1
+
+        return null
       }
     }
   })

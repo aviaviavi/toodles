@@ -40,3 +40,21 @@
 .refresh:active {
     color: grey;
 }
+
+.priority-number {
+    width: 5em;
+}
+
+.todo-source-link {
+    font-size: .75em;
+}
+
+.todo-source-link a:link, .todo-source-link a:visited {
+    color: grey !important;
+}
+
+.sortable {
+    cursor: pointer;
+}
+
+

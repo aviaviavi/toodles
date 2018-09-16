@@ -5,6 +5,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators       #-}
 
+-- TODO(avi|p=2) break this into modules
 module Main where
 
 import qualified Control.Exception          as E
@@ -54,6 +55,7 @@ data TodoEntry = TodoEntryHead
   , lineNumber :: LineNumber
   , priority   :: Maybe Integer
   , customAttributes :: [(T.Text, T.Text)]
+  , tags :: [T.Text]
   } | TodoBodyLine T.Text deriving (Show, Generic)
 
 data TodoListResult = TodoListResult {
@@ -96,7 +98,7 @@ app :: ToodlesState -> Application
 app s = (serve toodlesAPI) $ server s
 
 isEntryHead :: TodoEntry -> Bool
-isEntryHead (TodoEntryHead _ _ _ _ _ _ _) = True
+isEntryHead (TodoEntryHead _ _ _ _ _ _ _ _) = True
 isEntryHead _                           = False
 
 isBodyLine :: TodoEntry -> Bool
@@ -104,7 +106,7 @@ isBodyLine (TodoBodyLine _ ) = True
 isBodyLine _                 = False
 
 combineTodo :: TodoEntry -> TodoEntry -> TodoEntry
-combineTodo (TodoEntryHead i b a p n priority attrs) (TodoBodyLine l) = TodoEntryHead i (b ++ [l]) a p n priority attrs
+combineTodo (TodoEntryHead i b a p n priority attrs tags) (TodoBodyLine l) = TodoEntryHead i (b ++ [l]) a p n priority attrs tags
 combineTodo _ _ = error "Can't combine todoEntry of these types"
 
 data SourceFile = SourceFile
@@ -136,7 +138,7 @@ argParser =
   verbosity &=
   help "Manage TODO's directly from your codebase"
 
--- TODO(avi) add more languages
+-- TODO(avi|p=3) add more languages
 fileTypeToComment :: [(T.Text, T.Text)]
 fileTypeToComment =
   [ (".cpp", "//")
@@ -186,25 +188,27 @@ parsePriority = do
 parseAssignee :: Parser String
 parseAssignee = many (noneOf [')', '|', '='])
 
--- TODO fix and type this better
-parseDetails :: T.Text -> (Maybe T.Text, Maybe T.Text, [(T.Text, T.Text)])
+-- TODO(p=3) fix and type this better
+parseDetails :: T.Text -> (Maybe T.Text, Maybe T.Text, [(T.Text, T.Text)], [T.Text])
 parseDetails toParse =
   let tokens = T.splitOn "|" toParse
-      a = find (\t -> (not (T.null t)) && (not (T.isInfixOf "=" t))) tokens
+      a = find (\t -> (not (T.null t)) && (not (T.isInfixOf "=" t) && (not (T.isPrefixOf "#" t)))) tokens
       allDetails =
         map (\[a, b] -> (a, b)) $
         filter (\t -> length t == 2) $ map (T.splitOn "=") tokens
       priority = snd <$> (find (\t -> (T.strip $ fst t) == "p") allDetails)
       filteredDetails = filter (\t -> (T.strip $ fst t) /= "p") allDetails
-  in (a, priority, filteredDetails)
+      tags = filter (\t -> T.isPrefixOf "#" t) tokens
+  in (a, priority, filteredDetails, tags)
 
 inParens = between (symbol "(") (symbol ")")
 
 stringToMaybe t = if T.null t then Nothing else Just t
 
-fst3 (x, _, _) = x
-snd3 (_, x, _) = x
-thd3 (_, _, x) = x
+fst4 (x, _, _, _) = x
+snd4 (_, x, _, _) = x
+thd4 (_, _, x, _) = x
+fth4 (_, _, _, x) = x
 
 parseTodoEntryHead :: FilePath -> LineNumber -> Parser TodoEntry
 parseTodoEntryHead path lineNum = do
@@ -212,12 +216,13 @@ parseTodoEntryHead path lineNum = do
   _ <- symbol "TODO"
   details <- optional $ try (inParens $ many (noneOf [')', '(']))
   let parsedDetails = parseDetails . T.pack <$> details
-      priority = (readMaybe . T.unpack) =<< (snd3 =<< parsedDetails)
-      otherDetails = maybe [] thd3 parsedDetails
+      priority = (readMaybe . T.unpack) =<< (snd4 =<< parsedDetails)
+      otherDetails = maybe [] thd4 parsedDetails
+      tags = maybe [] fth4 parsedDetails
   _ <- optional $ symbol "-"
   _ <- optional $ symbol ":"
   b <- many anyChar
-  return $ TodoEntryHead 0 [T.pack b] (stringToMaybe . T.strip $ fromMaybe "" (fst3 =<< parsedDetails)) path lineNum priority otherDetails
+  return $ TodoEntryHead 0 [T.pack b] (stringToMaybe . T.strip $ fromMaybe "" (fst4 =<< parsedDetails)) path lineNum priority otherDetails tags
 
 parseTodo :: FilePath -> LineNumber -> Parser TodoEntry
 parseTodo path lineNum = try (parseTodoEntryHead path lineNum) <|> (parseComment $ getExtension path)
@@ -228,7 +233,7 @@ getAllFiles path = E.catch
     putStrLn $ printf "Running toodles for path: %s" path
     files <- recurseDir SystemFS path
     let validFiles = filter isValidFile files
-    -- TODO(p=3|avi|deadline=soon) make sure it's a file first
+    -- TODO(p=3|avi|#techdebt) make sure it's a file first
     mapM (\f -> SourceFile f . (map T.pack . lines) <$> E.catch (SIO.readFile f) (\(e :: E.IOException) -> print e >> return "")) validFiles)
   (\(e :: E.IOException) ->
      putStrLn ("Error reading " ++ path ++ ": " ++ show e) >> return [])
@@ -237,7 +242,7 @@ fileHasValidExtension :: FilePath -> Bool
 fileHasValidExtension path =
   any (\ext -> ext `T.isSuffixOf` T.pack path) (map fst fileTypeToComment)
 
--- TODO(avi|p=1) this should be configurable
+-- TODO(avi|p=2) this should be configurable
 ignoreFile :: FilePath -> Bool
 ignoreFile file = let p = T.pack file in
   T.isInfixOf "node_modules" p || T.isSuffixOf "pb.go" p || T.isSuffixOf "_pb2.py" p
@@ -263,7 +268,7 @@ foldTodoHelper (todos :: [TodoEntry], currentlyBuildingTodoLines :: Bool) maybeT
   | otherwise = (todos, False)
 
 prettyFormat :: TodoEntry -> String
-prettyFormat (TodoEntryHead _ l a p n priority _) =
+prettyFormat (TodoEntryHead _ l a p n priority _ _) =
   printf "Assignee: %s\n%s%s:%d\n%s" (fromMaybe "None" a) (maybe "" (\x -> "Priority: " ++ show x ++ "\n") priority) p n (unlines $ map T.unpack l)
 prettyFormat (TodoBodyLine _) = error "Invalid type for prettyFormat"
 
