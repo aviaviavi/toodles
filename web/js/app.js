@@ -1,6 +1,6 @@
 // TODO(avi) - add function to remove entries
 // TODO(avi|p=1) - sort by custom keys, tags
-// TODO(p=1|key=val|#frontend) format attrs and tags
+// TODO(p=1|key=val|otherkey=otherval|#frontend|#html) format attrs and tags
 $(document).ready(function() {
   new Vue({
     el: '#top-div',
