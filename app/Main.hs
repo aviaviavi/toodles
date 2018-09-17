@@ -189,19 +189,25 @@ argParser =
   verbosity &=
   help "Manage TODO's directly from your codebase"
 
--- TODO(avi|p=3) add more languages
 fileTypeToComment :: [(T.Text, T.Text)]
 fileTypeToComment =
-  [ (".cpp", "//")
+  [ (".c", "//")
+  , (".clj", ";;")
+  , (".cpp", "//")
+  , (".ex", "#")
+  , (".erl", "%")
   , (".go", "//")
   , (".hs", "--")
   , (".java", "//")
   , (".js", "//")
+  , (".m", "//")
   , (".proto", "//")
   , (".py", "#")
   , (".rb", "#")
+  , (".rs", "//")
   , (".scala", "//")
   , (".sh", "#")
+  , (".swift", "///")
   , (".ts", "//")
   , (".yaml", "#")
   ]
