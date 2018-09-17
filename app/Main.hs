@@ -170,19 +170,19 @@ newtype AssigneeFilterRegex = AssigneeFilterRegex T.Text deriving (Show, Data, E
 data SearchFilter = AssigneeFilter AssigneeFilterRegex deriving (Show, Data, Eq)
 
 data ToodlesArgs = ToodlesArgs
-  { project_root    :: FilePath
+  { directory    :: FilePath
   , assignee_search :: Maybe SearchFilter
   , limit_results   :: Int
-  , runServer       :: Bool
+  , port            :: Maybe Int
   } deriving (Show, Data, Typeable, Eq)
 
 argParser :: ToodlesArgs
 argParser =
   ToodlesArgs
-  {project_root = def &= typFile &= help "Root directory of your project"
+  {directory = def &= typFile &= help "Root directory of your project"
   , assignee_search = def &= help "Filter todo's by assignee"
   , limit_results = def &= help "Limit number of search results"
-  , runServer = def &= help "Run server"
+  , port = def &= help "Run server on port"
   } &=
   summary ("toodles " ++ showVersion version) &=
   program "toodles" &=
@@ -335,8 +335,8 @@ limitSearch results limit =
 
 runFullSearch :: ToodlesArgs -> IO TodoListResult
 runFullSearch userArgs =
-  let directory  = project_root userArgs in do
-  allFiles <- getAllFiles directory
+  let projectRoot = directory userArgs in do
+  allFiles <- getAllFiles projectRoot
   let parsedTodos = concatMap runTodoParser allFiles
       filteredTodos = filter (filterSearch (assignee_search userArgs)) parsedTodos
       results = limitSearch filteredTodos $ limit_results userArgs
@@ -368,20 +368,20 @@ addAnchors s =
 
 setAbsolutePath :: ToodlesArgs -> IO ToodlesArgs
 setAbsolutePath args =
-  let pathOrDefault = if T.null . T.pack $ project_root args then "." else project_root args in do
+  let pathOrDefault = if T.null . T.pack $ directory args then "." else directory args in do
     absolute <- normalise_path <$> absolute_path pathOrDefault
-    return $ args { project_root = absolute }
+    return $ args { directory = absolute }
 
 main :: IO ()
 main = do
   userArgs <- cmdArgs argParser >>= setAbsolutePath
   sResults <- runFullSearch userArgs
-  if runServer userArgs
+  if isJust $ port userArgs
     then do
+      let webPort = fromJust $ port userArgs
       ref <- newIORef sResults
-      -- TODO(p=1) port should be configurable
-      putStrLn "serving on 9001"
-      run 9001 $ app $ ToodlesState ref
+      putStrLn $ "serving on " ++ show webPort
+      run webPort $ app $ ToodlesState ref
      else
       mapM_ (putStrLn . prettyFormat) $ todos sResults
   return ()

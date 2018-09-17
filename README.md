@@ -32,6 +32,21 @@ a tag, which can be used to label and group your TODO's.
 
 Assign your TODO's to someone. Any plain word that will be interpreted as an assignee.
 
-```
+```python
 # TODO(bob) - something we need to do later
 ```
+
+### Current Limitations
+
+Due to the parser's current simplicity, Toodles won't see TODO's in multiline initiated comment. For instance in javascript
+
+```javascript
+// TODO this would be parsed
+
+/*
+
+ TODO(#bug|open_to=anyone) this will _not_ be picked up by toodles
+
+*/
+```
+

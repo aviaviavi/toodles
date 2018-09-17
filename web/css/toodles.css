@@ -62,9 +62,14 @@
 }
 
 .tag-item {
-    background-color: #E9F1F7;
+    /* background-color: #E9F1F7; */
+    background-color: #4F6D7A;
+    color: white;
+    font-size: .75em;
     margin-right: .2em;
-    padding: .1em;
+    padding: .3em;
+    line-height: 1.6em;
+    text-align: center;
 }
 
 .attribute-block{
@@ -73,7 +78,9 @@
 .attribute-item {
     background-color: #D6F6DD;
     margin-right: .2em;
-    padding: .1em;
+    padding: .3em;
+    line-height: 1.6em;
+    font-size: .75em;
 }
 
 .priority-column {
