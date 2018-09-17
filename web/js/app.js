@@ -101,6 +101,7 @@ $(document).ready(function() {
 
         return null
       },
+
       deleteSeletedTodos: function() {
         if (confirm("Are you sure you want to delete these todo's?")) {
           $.ajax({

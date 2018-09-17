@@ -124,10 +124,11 @@ removeAndAdjust deleteList =
 
 deleteTodos :: ToodlesState -> DeleteTodoRequest -> Handler T.Text
 deleteTodos (ToodlesState ref) req = do
-  (TodoListResult r _) <- liftIO $ readIORef ref
+  refVal@(TodoListResult r _) <- liftIO $ readIORef ref
   let toDelete = filter (\t -> Main.id t `elem` (ids req)) r
-  -- TODO(p=0|#fix) - adjust line numbers in the same file after you delete
   liftIO $ doUntilNull removeAndAdjust toDelete
+  let updeatedResults = refVal { todos = (filter (\t -> not $ Main.id t `elem` (map Main.id toDelete)) r) }
+  _ <- liftIO $ atomicModifyIORef' ref (const (updeatedResults, updeatedResults))
   return $ T.pack "{}"
 
 root :: Application
