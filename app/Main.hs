@@ -349,8 +349,8 @@ getFullSearchResults (ToodlesState ref) recompute =
     putStrLn "refreshing todo's"
     userArgs <- cmdArgs argParser >>= setAbsolutePath
     sResults <- runFullSearch userArgs
-    _ <- atomicModifyIORef' ref (const (sResults, sResults))
-    return sResults
+    writtenResults <- atomicModifyIORef' ref (const (sResults, sResults))
+    return writtenResults
   else
     putStrLn "cached read" >> readIORef ref
 
