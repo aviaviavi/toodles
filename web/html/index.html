@@ -84,8 +84,16 @@
                             <div>{{ todo.body }}</div>
                         </td>
                         <td class="todo-item-customAttributes">
-                            <div v-show="Object.keys(todo.customAttributes).length">{{ Object.entries(todo.customAttributes).join(" ").replace(/,/g, ":") }}</div>
-                            <div v-show="Object.keys(todo.tags).length">{{todo.tags.join(" ")}}</div>
+                            <div v-show="Object.keys(todo.customAttributes).length" class="attribute-block">
+                                <span v-for="entry in Object.entries(todo.customAttributes)" class="attribute-item">
+                                    {{entry[0]}}: {{entry[1]}}
+                                </span>
+                            </div>
+                            <div class="tag-block" v-show="Object.keys(todo.tags).length">
+                                <span v-for="tag in todo.tags" class="tag-item">
+                                    {{tag}}
+                                </span>
+                            </div>
                         </td>
                     </tr>
                 </table>

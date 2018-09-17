@@ -57,3 +57,21 @@
     cursor: pointer;
 }
 
+.tag-block{
+    margin-top: .3em;
+}
+
+.tag-item {
+    background-color: #E9F1F7;
+    margin-right: .2em;
+    padding: .1em;
+}
+
+.attribute-block{
+}
+
+.attribute-item {
+    background-color: #D6F6DD;
+    margin-right: .2em;
+    padding: .1em;
+}

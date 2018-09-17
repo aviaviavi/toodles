@@ -293,7 +293,7 @@ fileHasValidExtension :: FilePath -> Bool
 fileHasValidExtension path =
   any (\ext -> ext `T.isSuffixOf` T.pack path) (map fst fileTypeToComment)
 
--- TODO(avi|p=2|#feature) this should be configurable
+-- TODO(avi|p=2|#feature|#techdebt|key=other.value) this should be configurable
 ignoreFile :: FilePath -> Bool
 ignoreFile file = let p = T.pack file in
   T.isInfixOf "node_modules" p || T.isSuffixOf "pb.go" p || T.isSuffixOf "_pb2.py" p
@@ -378,6 +378,7 @@ main = do
   if runServer userArgs
     then do
       ref <- newIORef sResults
+      -- TODO(p=1) port should be configurable
       putStrLn "serving on 9001"
       run 9001 $ app $ ToodlesState ref
      else
