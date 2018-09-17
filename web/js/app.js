@@ -1,5 +1,3 @@
-// TODO(avi) - add function to remove entries
-// TODO(avi|p=1) - sort by custom keys, tags
 $(document).ready(function() {
   new Vue({
     el: '#top-div',
@@ -113,7 +111,12 @@ $(document).ready(function() {
             data: JSON.stringify({
               ids: Object.entries(this.todoSelected).filter(e => e[1]).map(e => parseInt(e[0]))
             }),
-            success: function(data){console.log(data)}
+            success: function(data){
+              this.todos = this.todos.filter(function(t) {
+                return !this.todoSelected[t.id]
+              }.bind(this))
+              this.todoSelected = {}
+            }.bind(this)
           })
         } else {
           console.log("no")

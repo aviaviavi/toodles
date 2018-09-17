@@ -75,7 +75,7 @@ instance ToJSON DeleteTodoRequest
 
 type ToodlesAPI =
   "todos" :> QueryFlag "recompute" :> Get '[JSON] TodoListResult :<|>
-  "todos" :> "delete" :> ReqBody '[JSON] DeleteTodoRequest :> Post '[JSON] NoContent :<|>
+  "todos" :> "delete" :> ReqBody '[JSON] DeleteTodoRequest :> Post '[JSON] T.Text :<|>
   "static" :> Raw :<|> -- file server
   "source_file" :> Capture "id" Integer :> Get '[HTML] BZ.Html :<|> -- source file
   Raw -- root html page
@@ -122,13 +122,13 @@ removeAndAdjust deleteList =
                         else t)
                    rest
 
-deleteTodos :: ToodlesState -> DeleteTodoRequest -> Handler NoContent
+deleteTodos :: ToodlesState -> DeleteTodoRequest -> Handler T.Text
 deleteTodos (ToodlesState ref) req = do
   (TodoListResult r _) <- liftIO $ readIORef ref
   let toDelete = filter (\t -> Main.id t `elem` (ids req)) r
   -- TODO(p=0|#fix) - adjust line numbers in the same file after you delete
   liftIO $ doUntilNull removeAndAdjust toDelete
-  return NoContent
+  return $ T.pack "{}"
 
 root :: Application
 root _ res = readFile "./web/html/index.html" >>= \r -> res $
