@@ -75,3 +75,7 @@
     margin-right: .2em;
     padding: .1em;
 }
+
+.priority-column {
+    min-width: 105px;
+}
