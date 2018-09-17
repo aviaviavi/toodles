@@ -93,7 +93,7 @@ doUntilNull :: ([a] -> IO [a]) -> [a] -> IO ()
 doUntilNull f xs = do
   result <- f xs
   if null result then return ()
-  else void $ f result
+  else doUntilNull f result
 
 removeTodoFromCode :: TodoEntry -> IO ()
 removeTodoFromCode todo = do
