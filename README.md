@@ -50,3 +50,25 @@ Due to the parser's current simplicity, Toodles won't see TODO's in multiline in
 */
 ```
 
+### Scanned Languages
+
+Submit a PR if you'd like a language to be added. There will eventually be
+support for this to be user configurable
+
+- C/C++
+- Elixir
+- Erlang
+- Go
+- Haskell
+- Java
+- Javascript
+- Objective-C
+- Protobuf
+- Python
+- Ruby
+- Rust
+- Scala
+- Shell / Bash
+- Swift
+- Typescript
+- Yaml
