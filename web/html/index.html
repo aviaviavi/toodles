@@ -68,8 +68,8 @@
                                     <i class="fa fa-sort"></i>
                                 </span>
                             </td>
-                            <td>Assignee</td>
                             <td>Body</td>
+                            <td>Assignee</td>
                             <td>Tags</td>
                         </tr>
                     </thead>
@@ -78,11 +78,11 @@
                         <td class="todo-item-priority" >
                             <div v-show="todo.priority !== undefined">{{ todo.priority }}</div>
                         </td>
-                        <td class="todo-item-assignee">{{ todo.assignee }}</td>
                         <td class='todo-item-body'>
                             <div class="todo-source-link"><a :href="'/source_file/' + todo.id + '#line-' + todo.lineNumber" target="_blank">{{ todo.sourceFile }}:{{ todo.lineNumber}}</a></div>
                             <div>{{ todo.body }}</div>
                         </td>
+                        <td class="todo-item-assignee">{{ todo.assignee }}</td>
                         <td class="todo-item-customAttributes">
                             <div v-show="Object.keys(todo.customAttributes).length" class="attribute-block">
                                 <span v-for="entry in Object.entries(todo.customAttributes)" class="attribute-item">

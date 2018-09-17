@@ -224,6 +224,7 @@ symbol = L.symbol space
 
 parseComment :: T.Text -> Parser TodoEntry
 parseComment extension = do
+  -- TODO(#bug|p=2) this will put mixed code/comment lines into a todo on a previous line
   _ <- manyTill anyChar (symbol $ getCommentForFileType extension)
   b <- many anyChar
   return . TodoBodyLine $ T.pack b
