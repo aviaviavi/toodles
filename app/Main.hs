@@ -10,7 +10,6 @@ module Main where
 
 import qualified Control.Exception          as E
 import           Control.Monad
-
 import           Control.Monad.IO.Class
 import           Data.Aeson
 import qualified Data.ByteString.Lazy.Char8 as B8S
@@ -63,13 +62,20 @@ data TodoListResult = TodoListResult {
   message :: T.Text
                                      } deriving (Show, Generic)
 
+data DeleteTodoRequest = DeleteTodoRequest {
+  ids :: [Integer]
+                                           } deriving (Show, Generic)
 instance FromJSON TodoEntry
 instance ToJSON TodoEntry
 instance FromJSON TodoListResult
 instance ToJSON TodoListResult
+instance FromJSON DeleteTodoRequest
+instance ToJSON DeleteTodoRequest
+
 
 type ToodlesAPI =
   "todos" :> QueryFlag "recompute" :> Get '[JSON] TodoListResult :<|>
+  "todos" :> "delete" :> ReqBody '[JSON] DeleteTodoRequest :> Post '[JSON] NoContent :<|>
   "static" :> Raw :<|> -- file server
   "source_file" :> Capture "id" Integer :> Get '[HTML] BZ.Html :<|> -- source file
   Raw -- root html page
@@ -81,6 +87,22 @@ data ToodlesState = ToodlesState {
 toodlesAPI :: Proxy ToodlesAPI
 toodlesAPI = Proxy
 
+slice from to xs = take (to - from + 1) (drop from xs)
+
+removeTodoFromCode :: TodoEntry -> IO ()
+removeTodoFromCode todo = do
+  let startIndex = lineNumber todo - 1
+  fileLines <- lines <$> (SIO.readFile $ sourceFile todo)
+  let updatedLines = (slice 0 (fromIntegral $ startIndex - 1) fileLines) ++ (slice ((fromIntegral $ startIndex) + (length $ body todo) + 1) (length fileLines - 1) fileLines)
+  writeFile (sourceFile todo) $ unlines updatedLines
+
+deleteTodos :: ToodlesState -> DeleteTodoRequest -> Handler NoContent
+deleteTodos (ToodlesState ref) req = do
+  (TodoListResult r _) <- liftIO $ readIORef ref
+  let toDelete = filter (\t -> Main.id t `elem` (ids req)) r
+  liftIO $ mapM_ removeTodoFromCode toDelete
+  return NoContent
+
 root :: Application
 root _ res = readFile "./web/html/index.html" >>= \r -> res $
   responseLBS
@@ -90,6 +112,7 @@ root _ res = readFile "./web/html/index.html" >>= \r -> res $
 
 server :: ToodlesState -> Server ToodlesAPI
 server s = liftIO . getFullSearchResults s :<|>
+  deleteTodos s :<|>
   serveDirectoryFileServer "web" :<|>
   showRawFile s :<|>
   return root

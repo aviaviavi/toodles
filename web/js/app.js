@@ -1,6 +1,5 @@
 // TODO(avi) - add function to remove entries
 // TODO(avi|p=1) - sort by custom keys, tags
-// TODO(p=1|key=val|otherkey=otherval|#frontend|#html) format attrs and tags
 $(document).ready(function() {
   new Vue({
     el: '#top-div',
@@ -12,7 +11,8 @@ $(document).ready(function() {
         priorityFilter: "any",
         sortMultiplier: {'priority': 1},
         customSortSelected: '',
-        customAttributeKeys: []
+        customAttributeKeys: [],
+        todoSelected: {}
       }
     },
     created: function() {
@@ -102,6 +102,22 @@ $(document).ready(function() {
         this.sortMultiplier[sortField] = multiplier * -1
 
         return null
+      },
+      deleteSeletedTodos: function() {
+        if (confirm("Are you sure you want to delete these todo's?")) {
+          $.ajax({
+            url: "/todos/delete",
+            type: "POST",
+            dataType: "json",
+            contentType: 'application/json',
+            data: JSON.stringify({
+              ids: Object.entries(this.todoSelected).filter(e => e[1]).map(e => parseInt(e[0]))
+            }),
+            success: function(data){console.log(data)}
+          })
+        } else {
+          console.log("no")
+        }
       }
     }
   })

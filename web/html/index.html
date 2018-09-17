@@ -20,6 +20,12 @@
             </div>
             <div class="navbar-menu">
                 <div class="navbar-end">
+                    <div class="navbar-item delete-todo" v-on:click="deleteSeletedTodos" v-show="Object.values(todoSelected).some(v => v)">
+                        <span class="icon">
+                            <i class="fa fa-trash"></i>
+                        </span>
+                        <span>Delete</span>
+                    </div>
                     <div class="refresh navbar-item" v-on:click="refresh(true)()">
                         <span class="icon">
                             <i class="fa fa-refresh"></i>
@@ -55,6 +61,7 @@
                 <table class="table todo-list is-striped is-hoverable">
                     <thead>
                         <tr>
+                            <td></td>
                             <td v-on:click="sortTodos('priority')" class="sortable">
                                 Priority
                                 <span class="icon">
@@ -67,6 +74,7 @@
                         </tr>
                     </thead>
                     <tr class="todo-item" v-for="todo in todos" v-if="todo.body.indexOf(todoSearch) !== -1 || (todo.assignee || '').indexOf(todoSearch) !== -1 || (todo.tags || []).toString().indexOf(todoSearch) !== -1">
+                        <td><input type="checkbox" v-model="todoSelected[todo.id]"></td>
                         <td class="todo-item-priority" >
                             <div v-show="todo.priority">{{ todo.priority }}</div>
                         </td>

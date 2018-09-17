@@ -33,11 +33,11 @@
     border: none;
 }
 
-.refresh {
+.navbar-item {
     cursor: pointer;
 }
 
-.refresh:active {
+.navbar-item:active {
     color: grey;
 }
 
@@ -56,5 +56,4 @@
 .sortable {
     cursor: pointer;
 }
-
 
