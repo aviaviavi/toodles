@@ -75,8 +75,8 @@ $(document).ready(function() {
           // so we keep nulls at the end always when sorting
           const valDefault = multiplier > 0 ? Number.MAX_SAFE_INTEGER : Number.MIN_SAFE_INTEGER
           this.todos.sort(function(a, b) {
-            const _a = (a.priority || valDefault)
-            const _b = (b.priority || valDefault)
+            const _a = (a.priority !== null ? a.priority : valDefault)
+            const _b = (b.priority !== null ? b.priority : valDefault)
             if (_a < _b) {
               return multiplier * -1
             } else if (_a > _b) {

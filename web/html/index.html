@@ -76,7 +76,7 @@
                     <tr class="todo-item" v-for="todo in todos" v-if="todo.body.indexOf(todoSearch) !== -1 || (todo.assignee || '').indexOf(todoSearch) !== -1 || (todo.tags || []).toString().indexOf(todoSearch) !== -1">
                         <td><input type="checkbox" v-model="todoSelected[todo.id]"></td>
                         <td class="todo-item-priority" >
-                            <div v-show="todo.priority">{{ todo.priority }}</div>
+                            <div v-show="todo.priority !== undefined">{{ todo.priority }}</div>
                         </td>
                         <td class="todo-item-assignee">{{ todo.assignee }}</td>
                         <td class='todo-item-body'>

@@ -89,18 +89,45 @@ toodlesAPI = Proxy
 
 slice from to xs = take (to - from + 1) (drop from xs)
 
+doUntilNull :: ([a] -> IO [a]) -> [a] -> IO ()
+doUntilNull f xs = do
+  result <- f xs
+  if null result then return ()
+  else void $ f result
+
 removeTodoFromCode :: TodoEntry -> IO ()
 removeTodoFromCode todo = do
   let startIndex = lineNumber todo - 1
   fileLines <- lines <$> (SIO.readFile $ sourceFile todo)
-  let updatedLines = (slice 0 (fromIntegral $ startIndex - 1) fileLines) ++ (slice ((fromIntegral $ startIndex) + (length $ body todo) + 1) (length fileLines - 1) fileLines)
+  let updatedLines = (slice 0 (fromIntegral $ startIndex - 1) fileLines) ++ (slice ((fromIntegral startIndex) + (length $ body todo)) (length fileLines - 1) fileLines)
   writeFile (sourceFile todo) $ unlines updatedLines
+
+removeAndAdjust :: [TodoEntry] -> IO [TodoEntry]
+removeAndAdjust deleteList =
+  if null deleteList
+    then return []
+    else let deleteItem = head deleteList
+             rest = tail deleteList
+         in do _ <- removeTodoFromCode deleteItem
+               return $
+                 map
+                   (\t ->
+                      if (sourceFile t == sourceFile deleteItem) &&
+                         (lineNumber t > lineNumber deleteItem)
+                        then t
+                             { lineNumber =
+                                 (lineNumber t) -
+                                 (fromIntegral . length $ body deleteItem)
+                             }
+                        else t)
+                   rest
 
 deleteTodos :: ToodlesState -> DeleteTodoRequest -> Handler NoContent
 deleteTodos (ToodlesState ref) req = do
   (TodoListResult r _) <- liftIO $ readIORef ref
   let toDelete = filter (\t -> Main.id t `elem` (ids req)) r
-  liftIO $ mapM_ removeTodoFromCode toDelete
+  -- TODO(p=0|#fix) - adjust line numbers in the same file after you delete
+  liftIO $ doUntilNull removeAndAdjust toDelete
   return NoContent
 
 root :: Application
