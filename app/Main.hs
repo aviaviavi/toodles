@@ -5,7 +5,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators       #-}
 
--- TODO(avi|p=2) break this into modules
+-- TODO(avi|p=2|#techdebt) break this into modules
 module Main where
 
 import qualified Control.Exception          as E
@@ -239,7 +239,7 @@ parsePriority = do
 parseAssignee :: Parser String
 parseAssignee = many (noneOf [')', '|', '='])
 
--- TODO(p=3) fix and type this better
+-- TODO(p=3}|#techdebt) fix and type this better
 parseDetails :: T.Text -> (Maybe T.Text, Maybe T.Text, [(T.Text, T.Text)], [T.Text])
 parseDetails toParse =
   let tokens = T.splitOn "|" toParse
@@ -293,7 +293,7 @@ fileHasValidExtension :: FilePath -> Bool
 fileHasValidExtension path =
   any (\ext -> ext `T.isSuffixOf` T.pack path) (map fst fileTypeToComment)
 
--- TODO(avi|p=2) this should be configurable
+-- TODO(avi|p=2|#feature) this should be configurable
 ignoreFile :: FilePath -> Bool
 ignoreFile file = let p = T.pack file in
   T.isInfixOf "node_modules" p || T.isSuffixOf "pb.go" p || T.isSuffixOf "_pb2.py" p
