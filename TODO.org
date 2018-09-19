@@ -1,0 +1,9 @@
+Toodles also picks up TODO's from within an org mode file in your project. This
+can be used to track things like features that don't really have a specific
+place to go in the code.
+* Features
+** TODO(p=1|#feature) Be able to edit tags, attributes, priority, assignee
+** 3rd party integrations
+*** TODO(p=3|#3rdparty|#feature) make and remove github issues
+*** TODO(p=3|#3rdparty|#feature) Be able to edit tags, attributes, priority, assignee
+   

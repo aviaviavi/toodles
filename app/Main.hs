@@ -8,6 +8,7 @@
 -- TODO(avi|p=2|#techdebt) break this into modules
 module Main where
 
+
 import qualified Control.Exception          as E
 import           Control.Monad
 import           Control.Monad.IO.Class
@@ -201,6 +202,7 @@ fileTypeToComment =
   , (".java", "//")
   , (".js", "//")
   , (".m", "//")
+  , (".org", "")
   , (".proto", "//")
   , (".py", "#")
   , (".rb", "#")
@@ -268,9 +270,16 @@ snd4 (_, x, _, _) = x
 thd4 (_, _, x, _) = x
 fth4 (_, _, _, x) = x
 
+prefixParserForFileType extension =
+  let comment = symbol . getCommentForFileType $ extension
+      orgMode = (try $ symbol "****") <|> (try $ symbol "***") <|> (try $ symbol "**") <|> (try $ symbol "*") <|> (symbol "-") in
+    if extension == "org"
+    then orgMode
+    else comment
+
 parseTodoEntryHead :: FilePath -> LineNumber -> Parser TodoEntry
 parseTodoEntryHead path lineNum = do
-  _ <- manyTill anyChar (symbol . getCommentForFileType $ getExtension path)
+  _ <- manyTill anyChar (prefixParserForFileType $ getExtension path)
   _ <- symbol "TODO"
   details <- optional $ try (inParens $ many (noneOf [')', '(']))
   let parsedDetails = parseDetails . T.pack <$> details
