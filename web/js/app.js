@@ -20,7 +20,7 @@ $(document).ready(function() {
       refresh: function(recompute) {
         return function() {
           this.loading = true
-          $.ajax("http://localhost:9001/todos?recompute=" + !!recompute, {
+          $.ajax("/todos?recompute=" + !!recompute, {
             type: "GET",
             dataType: "json",
             success: function(data) {
@@ -100,6 +100,12 @@ $(document).ready(function() {
         this.sortMultiplier[sortField] = multiplier * -1
 
         return null
+      },
+
+      updateTodo: function(name) {
+        return function() {
+          console.log(name)
+        }
       },
 
       deleteSeletedTodos: function() {

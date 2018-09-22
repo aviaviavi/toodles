@@ -5,5 +5,5 @@ place to go in the code.
 ** TODO(p=1|#feature) Be able to edit tags, attributes, priority, assignee
 ** 3rd party integrations
 *** TODO(p=3|#3rdparty|#feature) make and remove github issues
-*** TODO(p=3|#3rdparty|#feature) Be able to edit tags, attributes, priority, assignee
+*** TODO(p=3|#3rdparty|#feature) make and remove basecamp issues
    

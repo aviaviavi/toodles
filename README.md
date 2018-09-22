@@ -14,21 +14,21 @@ ease! Separate details within parenthasis and separate with the `|` delimeter.
 # TODO(assignee|p=1|keys=vals|#tags) 
 ```
 
-- Priority
+#### Priority
 
 The key `p=<integer>` will be interpreted as a priority number
 
-- KeyVals
+#### KeyVals
 
 Use arbitrary key value pairs `<key>=<value>|<key2>=<value2>|...` and design any
 organization scheme you wish!
 
-- Tags
+#### Tags
 
 A detail starting with `#`, eg `#bug|#techdebt|#database|...` will be interpreted as
 a tag, which can be used to label and group your TODO's.
 
-- Assign
+#### Assign
 
 Assign your TODO's to someone. Any plain word that will be interpreted as an assignee.
 
