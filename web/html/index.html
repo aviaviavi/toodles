@@ -88,15 +88,15 @@
                     <thead>
                         <tr>
                             <td></td>
-                            <td v-on:click="sortTodos('priority')" class="sortable priority-column">
+                            <th v-on:click="sortTodos('priority')" class="sortable priority-column">
                                 Priority
                                 <span class="icon">
                                     <i class="fa fa-sort"></i>
                                 </span>
-                            </td>
-                            <td class="todo-item-body">Body</td>
-                            <td>Assignee</td>
-                            <td>Tags</td>
+                            </th>
+                            <th class="todo-item-body">Body</th>
+                            <th>Assignee</th>
+                            <th>Tags</th>
                         </tr>
                     </thead>
                     <tr class="todo-item" v-for="todo in todos" v-if="todo.body.indexOf(todoSearch) !== -1 || (todo.assignee || '').indexOf(todoSearch) !== -1 || (todo.tags || []).toString().indexOf(todoSearch) !== -1" @change="updateTodo('top level')">
