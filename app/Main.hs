@@ -17,6 +17,7 @@ import qualified Data.ByteString.Lazy.Char8 as B8S
 import           Data.IORef
 import           Data.List
 import           Data.Maybe
+import  Data.String.Utils
 import  Text.Read
 import           Data.Monoid
 import           Data.Proxy
@@ -66,19 +67,30 @@ data TodoListResult = TodoListResult {
 data DeleteTodoRequest = DeleteTodoRequest {
   ids :: [Integer]
                                            } deriving (Show, Generic)
+
+data EditTodoRequest = EditTodoRequest {
+  editIds :: [Integer],
+  setAssignee :: Maybe T.Text,
+  addTags :: [T.Text]
+                                       } deriving (Show, Generic)
+
 instance FromJSON TodoEntry
 instance ToJSON TodoEntry
 instance FromJSON TodoListResult
 instance ToJSON TodoListResult
 instance FromJSON DeleteTodoRequest
 instance ToJSON DeleteTodoRequest
-
+instance FromJSON EditTodoRequest
+instance ToJSON EditTodoRequest
 
 type ToodlesAPI =
   "todos" :> QueryFlag "recompute" :> Get '[JSON] TodoListResult :<|>
   "todos" :> "delete" :> ReqBody '[JSON] DeleteTodoRequest :> Post '[JSON] T.Text :<|>
+  "todos" :> "edit" :> ReqBody '[JSON] EditTodoRequest :> Post '[JSON] T.Text :<|>
   "static" :> Raw :<|> -- file server
-  "source_file" :> Capture "id" Integer :> Get '[HTML] BZ.Html :<|> -- source file
+  "source_file" :> Capture "id" Integer :> Get '[HTML] BZ.Html :<|> -- source
+  -- TODO(avi|#bug|p=1) - we don't have a 404 page, everything falls
+  -- through to default page
   Raw -- root html page
 
 data ToodlesState = ToodlesState {
@@ -132,6 +144,29 @@ deleteTodos (ToodlesState ref) req = do
   _ <- liftIO $ atomicModifyIORef' ref (const (updeatedResults, updeatedResults))
   return $ T.pack "{}"
 
+editTodos :: ToodlesState -> EditTodoRequest -> Handler T.Text
+editTodos (ToodlesState ref) req = do
+  refVal@(TodoListResult r _) <- liftIO $ readIORef ref
+  let editedList = map (\t -> if willEditTodo req t then (editTodo req t) else t) r
+      editedFilteredList = filter (willEditTodo req) editedList
+  _ <- mapM_ recordUpdates editedFilteredList
+  return $ T.pack "{}"
+  where
+
+    willEditTodo :: EditTodoRequest -> TodoEntry -> Bool
+    willEditTodo req entry = Main.id entry `elem` editIds req
+
+    editTodo :: EditTodoRequest -> TodoEntry -> TodoEntry
+    editTodo req entry = entry { assignee = (setAssignee req), tags = tags entry ++ (addTags req)}
+
+    recordUpdates :: MonadIO m => TodoEntry -> m ()
+    recordUpdates t =
+      let comment = fromJust $ lookup (getExtension $ sourceFile t) fileTypeToComment
+          detail = (T.pack "TODO(") <> (T.pack $ Data.String.Utils.join "|" (map T.unpack $ [fromMaybe "" $ assignee t] ++ (tags t) ++ (map (\a -> fst a <> "=" <> snd a)) (customAttributes t))) <> (T.pack ") ") in do
+        return ()
+
+
+
 root :: Application
 root _ res = readFile "./web/html/index.html" >>= \r -> res $
   responseLBS
@@ -142,6 +177,7 @@ root _ res = readFile "./web/html/index.html" >>= \r -> res $
 server :: ToodlesState -> Server ToodlesAPI
 server s = liftIO . getFullSearchResults s :<|>
   deleteTodos s :<|>
+  editTodos s :<|>
   serveDirectoryFileServer "web" :<|>
   showRawFile s :<|>
   return root

@@ -72,6 +72,10 @@
     text-align: center;
 }
 
+.todo-item-body {
+    max-width: 10%;
+}
+
 .attribute-block{
 }
 
@@ -85,4 +89,10 @@
 
 .priority-column {
     min-width: 105px;
+}
+
+.modal-content {
+    background-color: white;
+    min-width: 50%;
+    min-height: 20%;
 }

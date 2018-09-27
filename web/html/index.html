@@ -17,6 +17,12 @@
             </div>
             <div class="navbar-menu">
                 <div class="navbar-end">
+                    <div class="navbar-item edit-todos" v-on:click="editSeletedTodos" v-show="Object.values(todoSelected).some(v => v)">
+                        <span class="icon">
+                            <i class="fa fa-edit"></i>
+                        </span>
+                        <span>Edit</span>
+                    </div>
                     <div class="navbar-item delete-todo" v-on:click="deleteSeletedTodos" v-show="Object.values(todoSelected).some(v => v)">
                         <span class="icon">
                             <i class="fa fa-trash"></i>
@@ -32,6 +38,29 @@
                 </div>
             </div>
         </nav>
+        <div class="modal">
+            <div class="modal-background" @click="closeModal"></div>
+            <div class="modal-content">
+                <div class="edit-todo-form container">
+                    <div class="field">
+                        <label class="label">Set Assignee</label>
+                        <div class="control">
+                            <input class="input" type="text" placeholder="Assignee" v-model="setAssignee">
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label">Add Tag (comma separated)</label>
+                        <div class="control">
+                            <input class="input" type="text" placeholder="bug,techdebt,..." v-model="addTags">
+                        </div>
+                    </div>
+
+                    <button class="button is-primary submit-todo-edits" v-on:click="submitTodoEdits">Submit</button>
+                </div>
+            </div>
+            <button class="modal-close is-large" aria-label="close" @click="closeModal"></button>
+        </div>
         <div class="columns content-container">
             <div class="side-bar column is-one-quarter">
                 <label for="todo-search">Filter</label>
@@ -65,7 +94,7 @@
                                     <i class="fa fa-sort"></i>
                                 </span>
                             </td>
-                            <td>Body</td>
+                            <td class="todo-item-body">Body</td>
                             <td>Assignee</td>
                             <td>Tags</td>
                         </tr>
@@ -79,16 +108,16 @@
                             <div class="todo-source-link"><a :href="'/source_file/' + todo.id + '#line-' + todo.lineNumber" target="_blank">{{ todo.sourceFile }}:{{ todo.lineNumber}}</a></div>
                             <div>{{ todo.body }}</div>
                         </td>
-                        <td class="todo-item-assignee" contenteditable>{{ todo.assignee }}</td>
+                        <td class="todo-item-assignee" >{{ todo.assignee }}</td>
                         <td class="todo-item-customAttributes">
                             <div v-show="Object.keys(todo.customAttributes).length" class="attribute-block">
                                 <span v-for="entry in Object.entries(todo.customAttributes)" class="attribute-item" @change="updateTodo('here')">
-                                    <span contenteditable>{{entry[0]}}</span>: <span contenteditable>{{entry[1]}}</span>
+                                    <span >{{entry[0]}}</span>: <span >{{entry[1]}}</span>
                                 </span>
                             </div>
                             <div class="tag-block" v-show="Object.keys(todo.tags).length">
                                 <span v-for="tag in todo.tags" class="tag-item">
-                                    <span contenteditable>{{tag}}</span>
+                                    <span >{{tag}}</span>
                                 </span>
                             </div>
                         </td>

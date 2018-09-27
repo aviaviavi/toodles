@@ -10,7 +10,9 @@ $(document).ready(function() {
         sortMultiplier: {'priority': 1},
         customSortSelected: '',
         customAttributeKeys: [],
-        todoSelected: {}
+        todoSelected: {},
+        setAssignee: "",
+        addTags: ""
       }
     },
     created: function() {
@@ -108,6 +110,14 @@ $(document).ready(function() {
         }
       },
 
+      editSeletedTodos: function() {
+        $(".modal").addClass("is-active")
+      },
+
+      closeModal: function() {
+        $(".modal").removeClass("is-active")
+      },
+
       deleteSeletedTodos: function() {
         if (confirm("Are you sure you want to delete these todo's?")) {
           $.ajax({
@@ -128,6 +138,28 @@ $(document).ready(function() {
         } else {
           console.log("no")
         }
+      },
+
+      submitTodoEdits: function(){
+        $.ajax({
+          url: "/todos/edit",
+          type: "POST",
+          dataType: "json",
+          contentType: 'application/json',
+          data: JSON.stringify({
+            ids: Object.entries(this.todoSelected).filter(e => e[1]).map(e => parseInt(e[0])),
+            setAssignee: this.setAssignee,
+            addTags: this.addTags.split(",").map(s => s.trim()).filter(s => !!s)
+          }),
+          success: function(data){
+            this.todos = this.todos.filter(function(t) {
+              return !this.todoSelected[t.id]
+            }.bind(this))
+            this.todoSelected = {}
+            this.closeModal()
+          }.bind(this),
+          error: console.log
+        })
       }
     }
   })
