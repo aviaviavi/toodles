@@ -74,6 +74,7 @@
 
 .todo-item-body {
     max-width: 10%;
+    word-wrap: break-word;
 }
 
 .attribute-block{
