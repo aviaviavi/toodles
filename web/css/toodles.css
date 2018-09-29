@@ -16,6 +16,10 @@
     margin-top: 1em;
 }
 
+.main-container {
+    padding-right: 2%;
+}
+
 .todo-item-location {
     font-size: .7em;
     color: grey;
@@ -73,6 +77,10 @@
 }
 
 .todo-item-body {
+    word-wrap: break-word;
+}
+
+td, th {
     word-wrap: break-word;
 }
 
