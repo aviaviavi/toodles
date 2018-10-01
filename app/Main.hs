@@ -108,12 +108,18 @@ doUntilNull f xs = do
   if null result then return ()
   else doUntilNull f result
 
-removeTodoFromCode :: TodoEntry -> IO ()
-removeTodoFromCode todo = do
+removeTodoFromCode :: MonadIO m => TodoEntry -> m ()
+removeTodoFromCode = updateTodoLinesInFile (const [])
+
+-- | Given a function to emit new lines for a given todo, write that update in
+-- place of the current todo lines
+updateTodoLinesInFile :: MonadIO m => (TodoEntry -> [T.Text]) -> TodoEntry ->  m ()
+updateTodoLinesInFile f todo = do
   let startIndex = lineNumber todo - 1
-  fileLines <- lines <$> (SIO.readFile $ sourceFile todo)
-  let updatedLines = (slice 0 (fromIntegral $ startIndex - 1) fileLines) ++ (slice ((fromIntegral startIndex) + (length $ body todo)) (length fileLines - 1) fileLines)
-  writeFile (sourceFile todo) $ unlines updatedLines
+      newLines = map T.unpack $ f todo
+  fileLines <- liftIO $ lines <$> (SIO.readFile $ sourceFile todo)
+  let updatedLines = (slice 0 (fromIntegral $ startIndex - 1) fileLines) ++ newLines ++ (slice ((fromIntegral startIndex) + (length $ body todo)) (length fileLines - 1) fileLines)
+  liftIO $ writeFile (sourceFile todo) $ unlines updatedLines
 
 removeAndAdjust :: [TodoEntry] -> IO [TodoEntry]
 removeAndAdjust deleteList =
@@ -161,11 +167,19 @@ editTodos (ToodlesState ref) req = do
 
     recordUpdates :: MonadIO m => TodoEntry -> m ()
     recordUpdates t =
+      void $ updateTodoLinesInFile renderTodo t
+
+  -- TODO(p=0|#fix)
+renderTodo :: TodoEntry -> [T.Text]
+renderTodo t =
       let comment = fromJust $ lookup (getExtension $ sourceFile t) fileTypeToComment
-          detail = (T.pack "TODO(") <> (T.pack $ Data.String.Utils.join "|" (map T.unpack $ [fromMaybe "" $ assignee t] ++ (tags t) ++ (map (\a -> fst a <> "=" <> snd a)) (customAttributes t))) <> (T.pack ") ") in do
-        return ()
+          detail = (T.pack "TODO(") <> (T.pack $ Data.String.Utils.join "|" (map T.unpack $ [fromMaybe "" $ assignee t] ++ (tags t) ++ (map (\a -> fst a <> "=" <> snd a)) (customAttributes t))) <> (T.pack ") ")
+          fullNoComments = mapHead (\l -> detail <> " - " <> l) $ body t in
+        map (\l -> comment <> " " <> l) fullNoComments
 
-
+mapHead :: (a -> a) -> [a] -> [a]
+mapHead f (x:xs) = [f x] ++ xs
+mapHead _ xs = xs
 
 root :: Application
 root _ res = readFile "./web/html/index.html" >>= \r -> res $

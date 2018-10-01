@@ -147,7 +147,7 @@ $(document).ready(function() {
           dataType: "json",
           contentType: 'application/json',
           data: JSON.stringify({
-            ids: Object.entries(this.todoSelected).filter(e => e[1]).map(e => parseInt(e[0])),
+            editIds: Object.entries(this.todoSelected).filter(e => e[1]).map(e => parseInt(e[0])),
             setAssignee: this.setAssignee,
             addTags: this.addTags.split(",").map(s => s.trim()).filter(s => !!s)
           }),
