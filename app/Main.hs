@@ -1,65 +1,65 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DataKinds           #-}
+{-# LANGUAGE DeriveDataTypeable  #-}
+{-# LANGUAGE DeriveGeneric       #-}
+{-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE TypeOperators       #-}
 
 -- TODO(avib|p=Just 2|#techdebt)  - break this into modules
 module Main where
 
-import qualified Control.Exception as E
-import Control.Monad
-import Control.Monad.IO.Class
-import Data.Aeson
+import qualified Control.Exception          as E
+import           Control.Monad
+import           Control.Monad.IO.Class
+import           Data.Aeson
 import qualified Data.ByteString.Lazy.Char8 as B8S
-import Data.IORef
-import Data.List
-import Data.Maybe
-import Data.Monoid
-import Data.Proxy
-import Data.String.Utils
-import qualified Data.Text as T
-import Data.Version (showVersion)
-import Data.Void
-import Debug.Trace
-import GHC.Generics
-import Network.HTTP.Types (status200)
-import Network.Wai
-import Network.Wai.Handler.Warp
-import Paths_toodles (version)
-import Servant
-import Servant.HTML.Blaze
-import System.Console.CmdArgs
-import System.IO.HVFS
-import qualified System.IO.Strict as SIO
-import System.Path
-import System.Path.NameManip
-import qualified Text.Blaze.Html5 as BZ
-import Text.Megaparsec
-import Text.Megaparsec.Char
+import           Data.IORef
+import           Data.List
+import           Data.Maybe
+import           Data.Monoid
+import           Data.Proxy
+import           Data.String.Utils
+import qualified Data.Text                  as T
+import           Data.Version               (showVersion)
+import           Data.Void
+import           Debug.Trace
+import           GHC.Generics
+import           Network.HTTP.Types         (status200)
+import           Network.Wai
+import           Network.Wai.Handler.Warp
+import           Paths_toodles              (version)
+import           Servant
+import           Servant.HTML.Blaze
+import           System.Console.CmdArgs
+import           System.IO.HVFS
+import qualified System.IO.Strict           as SIO
+import           System.Path
+import           System.Path.NameManip
+import qualified Text.Blaze.Html5           as BZ
+import           Text.Megaparsec
+import           Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
-import Text.Printf
-import Text.Read
+import           Text.Printf
+import           Text.Read
 
-import Lib
+import           Lib
 
 type LineNumber = Integer
 
 data TodoEntry
-  = TodoEntryHead { id :: Integer
-                  , body :: [T.Text]
-                  , assignee :: Maybe T.Text
-                  , sourceFile :: FilePath
-                  , lineNumber :: LineNumber
-                  , priority :: Maybe Integer
+  = TodoEntryHead { id               :: Integer
+                  , body             :: [T.Text]
+                  , assignee         :: Maybe T.Text
+                  , sourceFile       :: FilePath
+                  , lineNumber       :: LineNumber
+                  , priority         :: Maybe Integer
                   , customAttributes :: [(T.Text, T.Text)]
-                  , tags :: [T.Text] }
+                  , tags             :: [T.Text] }
   | TodoBodyLine T.Text
   deriving (Show, Generic)
 
 data TodoListResult = TodoListResult
-  { todos :: [TodoEntry]
+  { todos   :: [TodoEntry]
   , message :: T.Text
   } deriving (Show, Generic)
 
@@ -68,9 +68,9 @@ data DeleteTodoRequest = DeleteTodoRequest
   } deriving (Show, Generic)
 
 data EditTodoRequest = EditTodoRequest
-  { editIds :: [Integer]
+  { editIds     :: [Integer]
   , setAssignee :: Maybe T.Text
-  , addTags :: [T.Text]
+  , addTags     :: [T.Text]
   } deriving (Show, Generic)
 
 instance FromJSON TodoEntry
@@ -89,8 +89,13 @@ instance FromJSON EditTodoRequest
 
 instance ToJSON EditTodoRequest
 
-type ToodlesAPI
-   = "todos" :> QueryFlag "recompute" :> Get '[ JSON] TodoListResult :<|> "todos" :> "delete" :> ReqBody '[ JSON] DeleteTodoRequest :> Post '[ JSON] T.Text :<|> "todos" :> "edit" :> ReqBody '[ JSON] EditTodoRequest :> Post '[ JSON] T.Text :<|> "static" :> Raw :<|> "source_file" :> Capture "id" Integer :> Get '[ HTML] BZ.Html :<|> Raw -- root html page
+type ToodlesAPI =
+  "todos" :> QueryFlag "recompute" :> Get '[ JSON] TodoListResult :<|>
+  "todos" :> "delete" :> ReqBody '[ JSON] DeleteTodoRequest :> Post '[ JSON] T.Text :<|>
+  "todos" :> "edit" :> ReqBody '[ JSON] EditTodoRequest :> Post '[ JSON] T.Text :<|>
+  "static" :> Raw :<|>
+  "source_file" :> Capture "id" Integer :> Get '[ HTML] BZ.Html :<|>
+  Raw -- root html page
 
 data ToodlesState = ToodlesState
   { results :: IORef TodoListResult
@@ -193,7 +198,7 @@ renderTodo t =
          Data.String.Utils.join
            "|"
            (map T.unpack $ [fromMaybe "" $ assignee t] ++
-            [fmap (\p -> "p=" <> T.pack (show p)) priority t] ++
+            [fmap (\p -> "p=" <> maybe "" (T.pack . show) p) priority t] ++
             (tags t) ++
             (map (\a -> fst a <> "=" <> snd a)) (customAttributes t))) <>
         (T.pack ") ")
@@ -202,7 +207,7 @@ renderTodo t =
 
 mapHead :: (a -> a) -> [a] -> [a]
 mapHead f (x:xs) = [f x] ++ xs
-mapHead _ xs = xs
+mapHead _ xs     = xs
 
 root :: Application
 root _ res =
@@ -221,11 +226,11 @@ app s = (serve toodlesAPI) $ server s
 
 isEntryHead :: TodoEntry -> Bool
 isEntryHead (TodoEntryHead _ _ _ _ _ _ _ _) = True
-isEntryHead _ = False
+isEntryHead _                               = False
 
 isBodyLine :: TodoEntry -> Bool
 isBodyLine (TodoBodyLine _) = True
-isBodyLine _ = False
+isBodyLine _                = False
 
 combineTodo :: TodoEntry -> TodoEntry -> TodoEntry
 combineTodo (TodoEntryHead i b a p n priority attrs tags) (TodoBodyLine l) =
@@ -233,7 +238,7 @@ combineTodo (TodoEntryHead i b a p n priority attrs tags) (TodoBodyLine l) =
 combineTodo _ _ = error "Can't combine todoEntry of these types"
 
 data SourceFile = SourceFile
-  { fullPath :: FilePath
+  { fullPath    :: FilePath
   , sourceLines :: [T.Text]
   } deriving (Show)
 
@@ -246,10 +251,10 @@ data SearchFilter =
   deriving (Show, Data, Eq)
 
 data ToodlesArgs = ToodlesArgs
-  { directory :: FilePath
+  { directory       :: FilePath
   , assignee_search :: Maybe SearchFilter
-  , limit_results :: Int
-  , port :: Maybe Int
+  , limit_results   :: Int
+  , port            :: Maybe Int
   } deriving (Show, Data, Typeable, Eq)
 
 argParser :: ToodlesArgs
