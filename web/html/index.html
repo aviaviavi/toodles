@@ -17,17 +17,23 @@
             </div>
             <div class="navbar-menu">
                 <div class="navbar-end">
-                    <div class="navbar-item edit-todos" v-on:click="editSeletedTodos" v-show="Object.values(todoSelected).some(v => v)">
+                    <div class="navbar-item edit-todos" v-on:click="editSeletedTodos" v-show="todos.filter(t => t.selected).some(t => !!t)">
                         <span class="icon">
                             <i class="fa fa-edit"></i>
                         </span>
                         <span>Edit</span>
                     </div>
-                    <div class="navbar-item delete-todo" v-on:click="deleteSeletedTodos" v-show="Object.values(todoSelected).some(v => v)">
+                    <div class="navbar-item delete-todo" v-on:click="deleteSeletedTodos" v-show="todos.filter(t => t.selected).some(t => !!t)">
                         <span class="icon">
                             <i class="fa fa-trash"></i>
                         </span>
                         <span>Delete</span>
+                    </div>
+                    <div class="select-all navbar-item" v-on:click="selectAll">
+                        <span class="icon">
+                            <i class="fa fa-check-square"></i>
+                        </span>
+                        <span>Select All</span>
                     </div>
                     <div class="refresh navbar-item" v-on:click="refresh(true)()">
                         <span class="icon">
@@ -42,14 +48,14 @@
             <div class="modal-background" @click="closeModal"></div>
             <div class="modal-content">
                 <div class="edit-todo-form container">
-                    <div class="field">
+                    <div class="field edit-todo-field-input">
                         <label class="label">Set Assignee</label>
                         <div class="control">
                             <input class="input" type="text" placeholder="Assignee" v-model="setAssignee">
                         </div>
                     </div>
 
-                    <div class="field">
+                    <div class="field edit-todo-field-input">
                         <label class="label">Add Tag (comma separated)</label>
                         <div class="control">
                             <input class="input" type="text" placeholder="bug,techdebt,..." v-model="addTags">
@@ -100,7 +106,7 @@
                         </tr>
                     </thead>
                     <tr class="todo-item" v-for="todo in todos" v-if="todo.body.indexOf(todoSearch) !== -1 || (todo.assignee || '').indexOf(todoSearch) !== -1 || (todo.tags || []).toString().indexOf(todoSearch) !== -1" @change="updateTodo('top level')">
-                        <td><input type="checkbox" v-model="todoSelected[todo.id]"></td>
+                        <td><input type="checkbox" v-model="todo.selected"></td>
                         <td class="todo-item-priority" >
                             <div v-show="todo.priority !== undefined">{{ todo.priority }}</div>
                         </td>

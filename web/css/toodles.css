@@ -63,16 +63,17 @@
 
 .tag-block{
     margin-top: .3em;
+    max-width: 200px;
 }
 
 .tag-item {
     /* background-color: #E9F1F7; */
     background-color: #4F6D7A;
+    line-height: 2;
     color: white;
     font-size: .75em;
     margin-right: .2em;
     padding: .3em;
-    line-height: 1.6em;
     text-align: center;
 }
 
@@ -91,7 +92,7 @@ td, th {
     background-color: #D6F6DD;
     margin-right: .2em;
     padding: .3em;
-    line-height: 1.6em;
+    line-height: 2;
     font-size: .75em;
 }
 
@@ -103,4 +104,11 @@ td, th {
     background-color: white;
     min-width: 50%;
     min-height: 20%;
+}
+
+.edit-todo-field-input {
+    width: 50%;
+}
+.edit-todo-form{
+    padding: 2em;
 }

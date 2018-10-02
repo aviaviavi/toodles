@@ -10,7 +10,6 @@ $(document).ready(function() {
         sortMultiplier: {'priority': 1},
         customSortSelected: '',
         customAttributeKeys: [],
-        todoSelected: {},
         setAssignee: "",
         addTags: ""
       }
@@ -41,7 +40,8 @@ $(document).ready(function() {
                     acc[curr[0]] = curr[1]
                     console.log(acc, curr)
                     return acc
-                  }, {})
+                  }, {}),
+                  selected: false
                 }
               })
               console.log("todos", this.todos)
@@ -64,7 +64,7 @@ $(document).ready(function() {
         }.bind(this)
       },
 
-      // TODO(avi|p=2|key=a val) make sorts persist refreshes
+// TODO(avi|p=2|key=a val) - make sorts persist refreshes
       sortTodos: function(sortField) {
         if (!sortField || typeof sortField !== 'string') {
           sortField = this.customSortSelected
@@ -126,18 +126,23 @@ $(document).ready(function() {
             dataType: "json",
             contentType: 'application/json',
             data: JSON.stringify({
-              ids: Object.entries(this.todoSelected).filter(e => e[1]).map(e => parseInt(e[0]))
+              ids: this.todos.filter(t => t.selected).map(t => t.id)
             }),
             success: function(data){
               this.todos = this.todos.filter(function(t) {
-                return !this.todoSelected[t.id]
+                return !t.selected
               }.bind(this))
-              this.todoSelected = {}
             }.bind(this)
           })
         } else {
           console.log("no")
         }
+      },
+
+      selectAll: function() {
+        this.todos.map(function(t) {
+          t.selected = true
+        })
       },
 
       submitTodoEdits: function(){
@@ -147,16 +152,30 @@ $(document).ready(function() {
           dataType: "json",
           contentType: 'application/json',
           data: JSON.stringify({
-            editIds: Object.entries(this.todoSelected).filter(e => e[1]).map(e => parseInt(e[0])),
+            editIds: this.todos.filter(t => t.selected).map(t => t.id),
             setAssignee: this.setAssignee,
             addTags: this.addTags.split(",").map(s => s.trim()).filter(s => !!s)
+              .map(tag => {
+                return tag[0] === "#" ?
+                  tag :
+                  "#" + tag
+
+              })
           }),
           success: function(data){
-            this.todos = this.todos.filter(function(t) {
-              return !this.todoSelected[t.id]
+            this.todos.filter(function(t) {
+              return t.selected
             }.bind(this))
-            this.todoSelected = {}
+              .map(function(t) {
+                if (this.setAssignee) {
+                  t.assignee = this.setAssignee
+                }
+                t.tags = t.tags.concat(this.addTags)
+             }.bind(this))
             this.closeModal()
+            this.todos.map(t => {
+              t.selected = false
+            })
           }.bind(this),
           error: console.log
         })

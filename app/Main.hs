@@ -5,7 +5,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators       #-}
 
--- TODO(avib|p=Just 2|#techdebt)  - break this into modules
+-- TODO(avi|#techdebt) - break this into modules
 module Main where
 
 import qualified Control.Exception          as E
@@ -54,7 +54,8 @@ data TodoEntry
                   , lineNumber       :: LineNumber
                   , priority         :: Maybe Integer
                   , customAttributes :: [(T.Text, T.Text)]
-                  , tags             :: [T.Text] }
+                  , tags             :: [T.Text]
+                  , leadingText      :: T.Text }
   | TodoBodyLine T.Text
   deriving (Show, Generic)
 
@@ -182,9 +183,12 @@ editTodos (ToodlesState ref) req = do
   where
     willEditTodo :: EditTodoRequest -> TodoEntry -> Bool
     willEditTodo req entry = Main.id entry `elem` editIds req
+
     editTodo :: EditTodoRequest -> TodoEntry -> TodoEntry
     editTodo req entry =
-      entry {assignee = (setAssignee req), tags = tags entry ++ (addTags req)}
+      let newAssignee = if ((isJust $ setAssignee req) && (not . T.null . fromJust $ setAssignee req)) then setAssignee req else assignee entry in
+        entry {assignee = newAssignee, tags = tags entry ++ (addTags req)}
+
     recordUpdates :: MonadIO m => TodoEntry -> m ()
     recordUpdates t = void $ updateTodoLinesInFile renderTodo t
 
@@ -198,16 +202,27 @@ renderTodo t =
          Data.String.Utils.join
            "|"
            (map T.unpack $ [fromMaybe "" $ assignee t] ++
-            [fmap (\p -> "p=" <> maybe "" (T.pack . show) p) priority t] ++
+            listIfNotNull (fmap (\p -> (T.pack (maybe "" ((\n -> "p=" ++ n) . show) p))) priority t) ++
             (tags t) ++
             (map (\a -> fst a <> "=" <> snd a)) (customAttributes t))) <>
         (T.pack ") ")
-      fullNoComments = mapHead (\l -> detail <> " - " <> l) $ body t
-  in map (\l -> comment <> " " <> l) fullNoComments
+-- TODO(|#test) - this should still be
+-- indented after editing
+      fullNoComments = mapHead (\l -> detail <> "- " <> l) $ body t
+      commented = map (\l -> comment <> " " <> l) fullNoComments in
+      mapHead (\l -> (leadingText t) <> l) $
+        mapInit (\l -> (foldl (<>) "" [" " | _ <- [1..(T.length $ leadingText t)]]) <> l) commented
 
 mapHead :: (a -> a) -> [a] -> [a]
 mapHead f (x:xs) = [f x] ++ xs
 mapHead _ xs     = xs
+
+mapInit :: (a -> a) -> [a] -> [a]
+mapInit f (x:xs) = [x] ++ (map f xs)
+mapInit _ x = x
+
+listIfNotNull "" = []
+listIfNotNull s = [s]
 
 root :: Application
 root _ res =
@@ -225,7 +240,7 @@ app :: ToodlesState -> Application
 app s = (serve toodlesAPI) $ server s
 
 isEntryHead :: TodoEntry -> Bool
-isEntryHead (TodoEntryHead _ _ _ _ _ _ _ _) = True
+isEntryHead (TodoEntryHead _ _ _ _ _ _ _ _ _) = True
 isEntryHead _                               = False
 
 isBodyLine :: TodoEntry -> Bool
@@ -233,8 +248,8 @@ isBodyLine (TodoBodyLine _) = True
 isBodyLine _                = False
 
 combineTodo :: TodoEntry -> TodoEntry -> TodoEntry
-combineTodo (TodoEntryHead i b a p n priority attrs tags) (TodoBodyLine l) =
-  TodoEntryHead i (b ++ [l]) a p n priority attrs tags
+combineTodo (TodoEntryHead i b a p n priority attrs tags leadingText) (TodoBodyLine l) =
+  TodoEntryHead i (b ++ [l]) a p n priority attrs tags leadingText
 combineTodo _ _ = error "Can't combine todoEntry of these types"
 
 data SourceFile = SourceFile
@@ -282,7 +297,6 @@ fileTypeToComment =
   , (".java", "//")
   , (".js", "//")
   , (".m", "//")
-  , (".org", "")
   , (".proto", "//")
   , (".py", "#")
   , (".rb", "#")
@@ -316,7 +330,7 @@ symbol = L.symbol space
 
 parseComment :: T.Text -> Parser TodoEntry
 parseComment extension
-  -- TODO(#bug|p=2) this will put mixed code/comment lines into a todo on a previous line
+-- TODO(avi|p=2|#bug|#addedviaUI|#alsoaddedHere|#set|#setagain) - this will put mixed code/comment lines into a todo on a previous line
  = do
   _ <- manyTill anyChar (symbol $ getCommentForFileType extension)
   b <- many anyChar
@@ -333,7 +347,7 @@ parsePriority = do
 parseAssignee :: Parser String
 parseAssignee = many (noneOf [')', '|', '='])
 
--- TODO(p=3}|#techdebt) fix and type this better
+-- TODO(avi|#techdebt) - fix and type this better
 parseDetails ::
      T.Text -> (Maybe T.Text, Maybe T.Text, [(T.Text, T.Text)], [T.Text])
 parseDetails toParse =
@@ -379,7 +393,7 @@ prefixParserForFileType extension =
 
 parseTodoEntryHead :: FilePath -> LineNumber -> Parser TodoEntry
 parseTodoEntryHead path lineNum = do
-  _ <- manyTill anyChar (prefixParserForFileType $ getExtension path)
+  leadingText <- manyTill anyChar (prefixParserForFileType $ getExtension path)
   _ <- symbol "TODO"
   details <- optional $ try (inParens $ many (noneOf [')', '(']))
   let parsedDetails = parseDetails . T.pack <$> details
@@ -399,6 +413,7 @@ parseTodoEntryHead path lineNum = do
       priority
       otherDetails
       tags
+      (T.pack leadingText)
 
 parseTodo :: FilePath -> LineNumber -> Parser TodoEntry
 parseTodo path lineNum =
@@ -410,7 +425,7 @@ getAllFiles path =
     (do putStrLn $ printf "Running toodles for path: %s" path
         files <- recurseDir SystemFS path
         let validFiles = filter isValidFile files
-    -- TODO(p=3|avi|#techdebt) make sure it's a file first
+-- TODO(avi|p=3|#techdebt) - make sure it's a file first
         mapM
           (\f ->
              SourceFile f . (map T.pack . lines) <$>
@@ -425,7 +440,7 @@ fileHasValidExtension :: FilePath -> Bool
 fileHasValidExtension path =
   any (\ext -> ext `T.isSuffixOf` T.pack path) (map fst fileTypeToComment)
 
--- TODO(avi|p=2|#feature|#techdebt|key=other.value) this should be configurable
+-- TODO(avi|p=2|#feature|#techdebt|key=other.value) - this should be configurable
 ignoreFile :: FilePath -> Bool
 ignoreFile file =
   let p = T.pack file
@@ -456,7 +471,7 @@ foldTodoHelper (todos :: [TodoEntry], currentlyBuildingTodoLines :: Bool) maybeT
   | otherwise = (todos, False)
 
 prettyFormat :: TodoEntry -> String
-prettyFormat (TodoEntryHead _ l a p n priority _ _) =
+prettyFormat (TodoEntryHead _ l a p n priority _ _ _) =
   printf
     "Assignee: %s\n%s%s:%d\n%s"
     (fromMaybe "None" a)
