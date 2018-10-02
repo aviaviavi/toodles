@@ -112,3 +112,15 @@ td, th {
 .edit-todo-form{
     padding: 2em;
 }
+
+.navbar-burger {
+    color: #363636;
+}
+
+.is-active .navbar-item {
+    color: black;
+}
+
+.is-active .navbar-item:hover {
+    background-color: #dbdbdb;
+}

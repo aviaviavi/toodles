@@ -145,6 +145,11 @@ $(document).ready(function() {
         })
       },
 
+      toggleMenuBurger: function(ev) {
+        $(".navbar-burger").toggleClass("is-active")
+        $(".navbar-menu").toggleClass("is-active")
+      },
+
       submitTodoEdits: function(){
         $.ajax({
           url: "/todos/edit",
