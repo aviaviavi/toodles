@@ -72,6 +72,7 @@ data EditTodoRequest = EditTodoRequest
   { editIds     :: [Integer]
   , setAssignee :: Maybe T.Text
   , addTags     :: [T.Text]
+  , setPriority :: Maybe Integer
   } deriving (Show, Generic)
 
 instance FromJSON TodoEntry
@@ -187,8 +188,10 @@ editTodos (ToodlesState ref) req = do
 
     editTodo :: EditTodoRequest -> TodoEntry -> TodoEntry
     editTodo req entry =
-      let newAssignee = if ((isJust $ setAssignee req) && (not . T.null . fromJust $ setAssignee req)) then setAssignee req else assignee entry in
-        entry {assignee = newAssignee, tags = tags entry ++ (addTags req)}
+      let newAssignee = if ((isJust $ setAssignee req) && (not . T.null . fromJust $ setAssignee req)) then setAssignee req else assignee entry
+          newPriority = if isJust (setPriority req) then setPriority req else priority entry in
+
+        entry {assignee = newAssignee, tags = tags entry ++ (addTags req), priority = newPriority}
 
     recordUpdates :: MonadIO m => TodoEntry -> m ()
     recordUpdates t = void $ updateTodoLinesInFile renderTodo t

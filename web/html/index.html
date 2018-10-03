@@ -63,7 +63,14 @@
                     <div class="field edit-todo-field-input">
                         <label class="label">Add Tag (comma separated)</label>
                         <div class="control">
-                            <input class="input" type="text" placeholder="bug,techdebt,..." v-model="addTags">
+                            <input class="input" type="text" placeholder="#bug,#techdebt,..." v-model="addTags">
+                        </div>
+                    </div>
+
+                    <div class="field edit-todo-field-input">
+                        <label class="label">Set Priority</label>
+                        <div class="control">
+                            <input class="input" type="number" placeholder="Number" v-model="setPriority">
                         </div>
                     </div>
 

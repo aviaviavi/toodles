@@ -11,7 +11,8 @@ $(document).ready(function() {
         customSortSelected: '',
         customAttributeKeys: [],
         setAssignee: "",
-        addTags: ""
+        addTags: "",
+        setPriority: null
       }
     },
     created: function() {
@@ -63,7 +64,7 @@ $(document).ready(function() {
           })
         }.bind(this)
       },
-
+// TODO(avi|p=2|key=a val) - make sorts persist refreshes
 // TODO(avi|p=2|key=a val) - make sorts persist refreshes
       sortTodos: function(sortField) {
         if (!sortField || typeof sortField !== 'string') {
@@ -165,7 +166,8 @@ $(document).ready(function() {
                   tag :
                   "#" + tag
 
-              })
+              }),
+            setPriority: parseInt(this.setPriority)
           }),
           success: function(data){
             this.todos.filter(function(t) {
@@ -175,7 +177,12 @@ $(document).ready(function() {
                 if (this.setAssignee) {
                   t.assignee = this.setAssignee
                 }
-                t.tags = t.tags.concat(this.addTags)
+                if (this.addTags) {
+                  t.tags = t.tags.concat(this.addTags)
+                }
+                if (this.setPriority) {
+                  t.priority = parseInt(this.setPriority)
+                }
              }.bind(this))
             this.closeModal()
             this.todos.map(t => {
