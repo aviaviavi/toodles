@@ -124,3 +124,7 @@ td, th {
 .is-active .navbar-item:hover {
     background-color: #dbdbdb;
 }
+
+.top-div {
+    overflow-x: scroll;
+}
