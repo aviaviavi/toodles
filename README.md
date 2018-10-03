@@ -5,10 +5,12 @@ you can manage your project directly from the code. View, filter, sort, and then
 edit your TODO's with an easy to use web application. When you're done, commit
 and push your changes and share changes with your team!
 
+![Toodles Screenshot](https://i.imgur.com/DEwzMYn.png)
+
 ### TODO details
 
 Specify details about your TODO's so that you can filter and sort them with
-ease! Separate details within parenthasis and separate with the `|` delimeter.
+ease! Specify details within parenthasis and separate with the `|` delimeter.
 
 ```python
 # TODO(assignee|p=1|keys=vals|#tags) 
@@ -21,7 +23,8 @@ The key `p=<integer>` will be interpreted as a priority number
 #### KeyVals
 
 Use arbitrary key value pairs `<key>=<value>|<key2>=<value2>|...` and design any
-organization scheme you wish!
+organization scheme you wish! A good use for this is to enter dates of deadlines
+for TODO's that you can sort on in Roodles
 
 #### Tags
 
@@ -41,11 +44,11 @@ Assign your TODO's to someone. Any plain word that will be interpreted as an ass
 Due to the parser's current simplicity, Toodles won't see TODO's in multiline initiated comment. For instance in javascript
 
 ```javascript
-// TODO this would be parsed
+// TODO(#bug) this would be parsed
 
 /*
 
- TODO(#bug|open_to=anyone) this will _not_ be picked up by toodles
+ TODO(#bug) this will _not_ be picked up by toodles
 
 */
 ```

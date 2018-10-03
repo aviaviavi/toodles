@@ -5,7 +5,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators       #-}
 
--- TODO(avi|#techdebt) - break this into modules
+-- TODO(avi|p=3|#techdebt) - break this into modules
 module Main where
 
 import qualified Control.Exception          as E
@@ -96,6 +96,7 @@ type ToodlesAPI =
   "todos" :> "edit" :> ReqBody '[ JSON] EditTodoRequest :> Post '[ JSON] T.Text :<|>
   "static" :> Raw :<|>
   "source_file" :> Capture "id" Integer :> Get '[ HTML] BZ.Html :<|>
+  -- TODO(p=1) - There's no 404 page because root is the default
   Raw -- root html page
 
 data ToodlesState = ToodlesState
@@ -206,8 +207,6 @@ renderTodo t =
             (tags t) ++
             (map (\a -> fst a <> "=" <> snd a)) (customAttributes t))) <>
         (T.pack ") ")
--- TODO(|#test) - this should still be
--- indented after editing
       fullNoComments = mapHead (\l -> detail <> "- " <> l) $ body t
       commented = map (\l -> comment <> " " <> l) fullNoComments in
       mapHead (\l -> (leadingText t) <> l) $
@@ -330,7 +329,6 @@ symbol = L.symbol space
 
 parseComment :: T.Text -> Parser TodoEntry
 parseComment extension
--- TODO(avi|p=2|#bug|#addedviaUI|#alsoaddedHere|#set|#setagain) - this will put mixed code/comment lines into a todo on a previous line
  = do
   _ <- manyTill anyChar (symbol $ getCommentForFileType extension)
   b <- many anyChar
@@ -347,7 +345,7 @@ parsePriority = do
 parseAssignee :: Parser String
 parseAssignee = many (noneOf [')', '|', '='])
 
--- TODO(avi|#techdebt) - fix and type this better
+-- TODO(avi|p=3|#techdebt) - fix and type this better
 parseDetails ::
      T.Text -> (Maybe T.Text, Maybe T.Text, [(T.Text, T.Text)], [T.Text])
 parseDetails toParse =
@@ -425,7 +423,7 @@ getAllFiles path =
     (do putStrLn $ printf "Running toodles for path: %s" path
         files <- recurseDir SystemFS path
         let validFiles = filter isValidFile files
--- TODO(avi|p=3|#techdebt) - make sure it's a file first
+        -- TODO(avi|p=3|#techdebt) - make sure it's a file first
         mapM
           (\f ->
              SourceFile f . (map T.pack . lines) <$>
@@ -440,7 +438,7 @@ fileHasValidExtension :: FilePath -> Bool
 fileHasValidExtension path =
   any (\ext -> ext `T.isSuffixOf` T.pack path) (map fst fileTypeToComment)
 
--- TODO(avi|p=2|#feature|#techdebt|key=other.value) - this should be configurable
+-- TODO(avi|p=2|#feature) - this should be configurable
 ignoreFile :: FilePath -> Bool
 ignoreFile file =
   let p = T.pack file
@@ -554,4 +552,3 @@ main = do
       putStrLn $ "serving on " ++ show webPort
       run webPort $ app $ ToodlesState ref
     else mapM_ (putStrLn . prettyFormat) $ todos sResults
-  return ()
