@@ -5,6 +5,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators       #-}
 
+
 -- TODO(avi|p=3|#techdebt) - break this into modules
 module Main where
 
@@ -97,8 +98,16 @@ type ToodlesAPI =
   "todos" :> "edit" :> ReqBody '[ JSON] EditTodoRequest :> Post '[ JSON] T.Text :<|>
   "static" :> Raw :<|>
   "source_file" :> Capture "id" Integer :> Get '[ HTML] BZ.Html :<|>
-  -- TODO(p=1) - There's no 404 page because root is the default
-  Raw -- root html page
+  CaptureAll "anything-else" T.Text :> Get '[HTML] BZ.Html
+
+server :: ToodlesState -> Server ToodlesAPI
+server s =
+  liftIO . getFullSearchResults s :<|>
+  deleteTodos s :<|>
+  editTodos s :<|>
+  serveDirectoryFileServer "web" :<|>
+  showRawFile s :<|>
+  root s
 
 data ToodlesState = ToodlesState
   { results :: IORef TodoListResult
@@ -226,17 +235,15 @@ mapInit _ x = x
 listIfNotNull "" = []
 listIfNotNull s = [s]
 
-root :: Application
-root _ res =
-  readFile "./web/html/index.html" >>= \r ->
-    res $ responseLBS status200 [] (B8S.pack r)
+root :: ToodlesState -> [T.Text] -> Handler BZ.Html
+root _ path =
+  if null path then
+    liftIO $ BZ.preEscapedToHtml <$> readFile "./web/html/index.html"
+  else throwError $ err404 { errBody = "Not found" }
 
-server :: ToodlesState -> Server ToodlesAPI
-server s =
-  liftIO . getFullSearchResults s :<|> deleteTodos s :<|> editTodos s :<|>
-  serveDirectoryFileServer "web" :<|>
-  showRawFile s :<|>
-  return root
+testroot :: ToodlesState -> [T.Text] -> Handler T.Text
+testroot _ _ =
+  return "Hello"
 
 app :: ToodlesState -> Application
 app s = (serve toodlesAPI) $ server s
