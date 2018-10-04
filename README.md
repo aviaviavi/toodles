@@ -24,7 +24,7 @@ The key `p=<integer>` will be interpreted as a priority number
 
 Use arbitrary key value pairs `<key>=<value>|<key2>=<value2>|...` and design any
 organization scheme you wish! A good use for this is to enter dates of deadlines
-for TODO's that you can sort on in Roodles
+for TODO's that you can sort on in Toodles
 
 #### Tags
 
