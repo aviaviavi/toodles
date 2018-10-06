@@ -41,10 +41,12 @@ executables:
     - servant-server
     - transformers
     - aeson
+    - yaml
     - wai
     - warp
     - http-types
     - bytestring
+    - regex-posix
 
 # tests:
 #   toodles-test:

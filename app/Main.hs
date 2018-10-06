@@ -17,6 +17,7 @@ import qualified Data.ByteString.Lazy.Char8 as B8S
 import           Data.IORef
 import           Data.List
 import           Data.Maybe
+import           Data.Either
 import           Data.Monoid
 import           Data.Proxy
 import           Data.String.Utils
@@ -33,6 +34,7 @@ import           Servant
 import           Servant.HTML.Blaze
 import           System.Console.CmdArgs
 import           System.IO.HVFS
+import           System.Directory
 import qualified System.IO.Strict           as SIO
 import           System.Path
 import           System.Path.NameManip
@@ -42,6 +44,8 @@ import           Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
 import           Text.Printf
 import           Text.Read
+import           Text.Regex.Posix
+import qualified Data.Yaml as Y
 
 import           Lib
 
@@ -76,6 +80,10 @@ data EditTodoRequest = EditTodoRequest
   , setPriority :: Maybe Integer
   } deriving (Show, Generic)
 
+data ToodlesConfig = ToodlesConfig {
+  ignore :: [FilePath]
+                                   } deriving (Show, Generic)
+
 instance FromJSON TodoEntry
 
 instance ToJSON TodoEntry
@@ -91,6 +99,8 @@ instance ToJSON DeleteTodoRequest
 instance FromJSON EditTodoRequest
 
 instance ToJSON EditTodoRequest
+
+instance FromJSON ToodlesConfig
 
 type ToodlesAPI =
   "todos" :> QueryFlag "recompute" :> Get '[ JSON] TodoListResult :<|>
@@ -427,12 +437,12 @@ parseTodo :: FilePath -> LineNumber -> Parser TodoEntry
 parseTodo path lineNum =
   try (parseTodoEntryHead path lineNum) <|> (parseComment $ getExtension path)
 
-getAllFiles :: FilePath -> IO [SourceFile]
-getAllFiles path =
+getAllFiles :: ToodlesConfig -> FilePath -> IO [SourceFile]
+getAllFiles config path =
   E.catch
     (do putStrLn $ printf "Running toodles for path: %s" path
         files <- recurseDir SystemFS path
-        let validFiles = filter isValidFile files
+        let validFiles = filter (isValidFile config) files
         -- TODO(avi|p=3|#techdebt) - make sure it's a file first
         mapM
           (\f ->
@@ -448,18 +458,19 @@ fileHasValidExtension :: FilePath -> Bool
 fileHasValidExtension path =
   any (\ext -> ext `T.isSuffixOf` T.pack path) (map fst fileTypeToComment)
 
--- TODO(avi|p=2|#feature) - this should be configurable
-ignoreFile :: FilePath -> Bool
-ignoreFile file =
+ignoreFile :: ToodlesConfig -> FilePath -> Bool
+ignoreFile (ToodlesConfig ignoredPaths) file =
   let p = T.pack file
   in T.isInfixOf "node_modules" p || T.isSuffixOf "pb.go" p ||
-     T.isSuffixOf "_pb2.py" p
+     T.isSuffixOf "_pb2.py" p ||
+     any (\p -> p =~ file) ignoredPaths
 
 getExtension :: FilePath -> T.Text
 getExtension path = last $ T.splitOn "." (T.pack path)
 
-isValidFile :: FilePath -> Bool
-isValidFile f = fileHasValidExtension f && not (ignoreFile f)
+isValidFile :: ToodlesConfig ->  FilePath -> Bool
+isValidFile config f =
+  fileHasValidExtension f && not (ignoreFile config f)
 
 runTodoParser :: SourceFile -> [TodoEntry]
 runTodoParser (SourceFile path ls) =
@@ -503,7 +514,12 @@ limitSearch results limit =
 runFullSearch :: ToodlesArgs -> IO TodoListResult
 runFullSearch userArgs =
   let projectRoot = directory userArgs
-  in do allFiles <- getAllFiles projectRoot
+  in do
+        configExists <- doesFileExist $ projectRoot ++ "/.toodles.yaml"
+        config <- if configExists
+          then eitherDecode' . B8S.pack <$> readFile (projectRoot ++ "/.toodles.yaml")
+          else return . Right $ ToodlesConfig []
+        allFiles <- getAllFiles (fromRight (ToodlesConfig []) config) projectRoot
         let parsedTodos = concatMap runTodoParser allFiles
             filteredTodos =
               filter (filterSearch (assignee_search userArgs)) parsedTodos

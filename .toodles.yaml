@@ -1,0 +1,5 @@
+# `ignore`: Specify a list of regular expressions.
+# Toodles will ignore a file that matches any of the entires
+
+ignore:
+  - 'test.js'

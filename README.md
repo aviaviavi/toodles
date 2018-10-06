@@ -39,6 +39,15 @@ Assign your TODO's to someone. Any plain word that will be interpreted as an ass
 # TODO(bob) - something we need to do later
 ```
 
+### Per Project Configuration
+
+You can configure toodles by putting a `.toodles.yaml` file in the root of your
+project. See this repo's `.toodles.yaml` for the full configuration spec.
+
+Currently via config you can:
+
+- Set files to ignore via a list of regular expressions
+
 ### Current Limitations
 
 Due to the parser's current simplicity, Toodles won't see TODO's in multiline initiated comment. For instance in javascript

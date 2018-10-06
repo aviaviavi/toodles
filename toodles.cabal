@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 1871ed2e5688f15b8914a0f579232f82d927043da29bc3f50ba459eac7f5e5b5
+-- hash: 281ad2b8f1f0b82110d09d5f17ae99ebd05bed5bd1810fe47bc8f04c8ede9ad0
 
 name:           toodles
 version:        0.1.0.0
@@ -52,6 +52,7 @@ executable toodles-exe
     , filepath
     , http-types
     , megaparsec
+    , regex-posix
     , servant
     , servant-blaze
     , servant-server
@@ -61,4 +62,5 @@ executable toodles-exe
     , transformers
     , wai
     , warp
+    , yaml
   default-language: Haskell2010
