@@ -48,20 +48,6 @@ Currently via config you can:
 
 - Set files to ignore via a list of regular expressions
 
-### Current Limitations
-
-Due to the parser's current simplicity, Toodles won't see TODO's in multiline initiated comment. For instance in javascript
-
-```javascript
-// TODO(#bug) this would be parsed
-
-/*
-
- TODO(#bug) this will _not_ be picked up by toodles
-
-*/
-```
-
 ### Scanned Languages
 
 Submit a PR if you'd like a language to be added. There will eventually be
@@ -84,3 +70,20 @@ support for this to be user configurable
 - Swift
 - Typescript
 - Yaml
+
+
+### Current Limitations
+
+Due to the parser's current simplicity, Toodles won't see TODO's in multiline initiated comment. For instance in javascript
+
+```javascript
+// TODO(#bug) this would be parsed
+
+/*
+
+ TODO(#bug) this will _not_ be picked up by toodles
+
+*/
+```
+
+

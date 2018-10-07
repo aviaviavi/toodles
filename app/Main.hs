@@ -5,7 +5,6 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators       #-}
 
-
 -- TODO(avi|p=3|#techdebt) - break this into modules
 module Main where
 
@@ -45,9 +44,8 @@ import qualified Text.Megaparsec.Char.Lexer as L
 import           Text.Printf
 import           Text.Read
 import           Text.Regex.Posix
+import Paths_toodles
 import qualified Data.Yaml as Y
-
-import           Lib
 
 type LineNumber = Integer
 
@@ -115,12 +113,13 @@ server s =
   liftIO . getFullSearchResults s :<|>
   deleteTodos s :<|>
   editTodos s :<|>
-  serveDirectoryFileServer "web" :<|>
+  serveDirectoryFileServer (dataPath s) :<|>
   showRawFile s :<|>
   root s
 
 data ToodlesState = ToodlesState
-  { results :: IORef TodoListResult
+  { results  :: IORef TodoListResult,
+    dataPath :: FilePath
   }
 
 toodlesAPI :: Proxy ToodlesAPI
@@ -175,7 +174,7 @@ removeAndAdjust deleteList =
                    rest
 
 deleteTodos :: ToodlesState -> DeleteTodoRequest -> Handler T.Text
-deleteTodos (ToodlesState ref) req = do
+deleteTodos (ToodlesState ref _) req = do
   refVal@(TodoListResult r _) <- liftIO $ readIORef ref
   let toDelete = filter (\t -> Main.id t `elem` (ids req)) r
   liftIO $ doUntilNull removeAndAdjust toDelete
@@ -189,7 +188,7 @@ deleteTodos (ToodlesState ref) req = do
   return $ T.pack "{}"
 
 editTodos :: ToodlesState -> EditTodoRequest -> Handler T.Text
-editTodos (ToodlesState ref) req = do
+editTodos (ToodlesState ref _) req = do
   refVal@(TodoListResult r _) <- liftIO $ readIORef ref
   let editedList =
         map
@@ -370,7 +369,7 @@ parseDetails ::
      T.Text -> (Maybe T.Text, Maybe T.Text, [(T.Text, T.Text)], [T.Text])
 parseDetails toParse =
   let tokens = T.splitOn "|" toParse
-      a =
+      assigneeTo =
         find
           (\t ->
              (not (T.null t)) &&
@@ -382,7 +381,7 @@ parseDetails toParse =
       priority = snd <$> (find (\t -> (T.strip $ fst t) == "p") allDetails)
       filteredDetails = filter (\t -> (T.strip $ fst t) /= "p") allDetails
       tags = filter (\t -> T.isPrefixOf "#" t) tokens
-  in (a, priority, filteredDetails, tags)
+  in (assigneeTo, priority, filteredDetails, tags)
 
 inParens = between (symbol "(") (symbol ")")
 
@@ -463,7 +462,7 @@ ignoreFile (ToodlesConfig ignoredPaths) file =
   let p = T.pack file
   in T.isInfixOf "node_modules" p || T.isSuffixOf "pb.go" p ||
      T.isSuffixOf "_pb2.py" p ||
-     any (\p -> p =~ file) ignoredPaths
+     any (\p -> file =~ p) ignoredPaths
 
 getExtension :: FilePath -> T.Text
 getExtension path = last $ T.splitOn "." (T.pack path)
@@ -529,7 +528,7 @@ runFullSearch userArgs =
         return $ TodoListResult indexedResults ""
 
 getFullSearchResults :: ToodlesState -> Bool -> IO TodoListResult
-getFullSearchResults (ToodlesState ref) recompute =
+getFullSearchResults (ToodlesState ref _) recompute =
   if recompute
     then do
       putStrLn "refreshing todo's"
@@ -540,7 +539,7 @@ getFullSearchResults (ToodlesState ref) recompute =
     else putStrLn "cached read" >> readIORef ref
 
 showRawFile :: ToodlesState -> Integer -> Handler BZ.Html
-showRawFile (ToodlesState ref) entryId = do
+showRawFile (ToodlesState ref _) entryId = do
   (TodoListResult r _) <- liftIO $ readIORef ref
   let entry = find (\t -> Main.id t == entryId) r
   liftIO $
@@ -575,6 +574,7 @@ main = do
     then do
       let webPort = fromJust $ port userArgs
       ref <- newIORef sResults
+      dataDir <- (++ "/web") <$> getDataDir
       putStrLn $ "serving on " ++ show webPort
-      run webPort $ app $ ToodlesState ref
+      run webPort $ app $ ToodlesState ref dataDir
     else mapM_ (putStrLn . prettyFormat) $ todos sResults

@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 281ad2b8f1f0b82110d09d5f17ae99ebd05bed5bd1810fe47bc8f04c8ede9ad0
+-- hash: c69e650e12cd7b86ca356322b38c23fd9fd2bcad26a012cbce9fb18819849a67
 
 name:           toodles
 version:        0.1.0.0
@@ -18,23 +18,21 @@ build-type:     Simple
 cabal-version:  >= 1.10
 extra-source-files:
     README.md
+    web/css/bulma.min.css
+    web/css/font-awesome.min.css
+    web/css/toodles.css
+    web/fonts/fontawesome-webfont.woff
+    web/fonts/fontawesome-webfont.woff2
+    web/html/index.html
+    web/js/app.js
+    web/js/jquery-3.3.1.min.js
+    web/js/vue.js
 
 source-repository head
   type: git
   location: https://github.com/aviaviavi/toodles
 
-library
-  exposed-modules:
-      Lib
-  other-modules:
-      Paths_toodles
-  hs-source-dirs:
-      src
-  build-depends:
-      base >=4.7 && <5
-  default-language: Haskell2010
-
-executable toodles-exe
+executable toodles
   main-is: Main.hs
   other-modules:
       Paths_toodles
@@ -58,7 +56,6 @@ executable toodles-exe
     , servant-server
     , strict
     , text
-    , toodles
     , transformers
     , wai
     , warp

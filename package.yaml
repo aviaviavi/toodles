@@ -8,6 +8,11 @@ copyright:           "2018 Avi Press"
 
 extra-source-files:
 - README.md
+- web/js/app.js
+- web/js/*
+- web/html/*
+- web/css/*
+- web/fonts/*
 
 synopsis:            Manage the TODO entries in your code
 description:         See the README on GitHub at <https://github.com/aviaviavi/toodles#readme>
@@ -15,11 +20,8 @@ description:         See the README on GitHub at <https://github.com/aviaviavi/t
 dependencies:
 - base >= 4.7 && < 5
 
-library:
-  source-dirs: src
-
 executables:
-  toodles-exe:
+  toodles:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
@@ -27,7 +29,6 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - toodles
     - text
     - megaparsec
     - directory
