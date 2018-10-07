@@ -1,5 +1,7 @@
 # Toodles
 
+[![Build Status](https://travis-ci.org/aviaviavi/toodles.svg?branch=master)](https://travis-ci.org/aviaviavi/toodles)
+
 Toodles scrapes your entire repository for TODO entries and organizes them so
 you can manage your project directly from the code. View, filter, sort, and then
 edit your TODO's with an easy to use web application. When you're done, commit
