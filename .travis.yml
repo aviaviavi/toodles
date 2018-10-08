@@ -33,11 +33,11 @@ before_install:
 
 install:
 # Build dependencies
-- stack --no-terminal --install-ghc build --only-dependencies
+- stack --no-terminal --install-ghc test --only-dependencies
 
 script:
 # Build the package, its tests, and its docs and run the tests
-- stack --no-terminal build --skip-ghc-check
+- stack --no-terminal test --skip-ghc-check
 
 notifications:
   email:
