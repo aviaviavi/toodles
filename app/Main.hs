@@ -247,7 +247,7 @@ listIfNotNull s  = [s]
 root :: ToodlesState -> [T.Text] -> Handler BZ.Html
 root (ToodlesState _ dPath) path =
   if null path then
-    liftIO $ BZ.preEscapedToHtml <$> readFile (dPath ++ "/web/html/index.html")
+    liftIO $ BZ.preEscapedToHtml <$> readFile (dPath ++ "/html/index.html")
   else throwError $ err404 { errBody = "Not found" }
 
 app :: ToodlesState -> Application

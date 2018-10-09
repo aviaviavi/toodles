@@ -2,10 +2,10 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: be575435aaf5d1d992a89de303219cc7d5a6a4e3888a828c3d54378c541914f7
+-- hash: 0c94110ed79d4a78056d1cae812a11d9a0d804c4c24304ced9b15ea51db5d3db
 
 name:           toodles
-version:        0.1.0.1
+version:        0.1.0.2
 synopsis:       Manage the TODO entries in your code
 description:    See the README on GitHub at <https://github.com/aviaviavi/toodles#readme>
 category:       Project Management
