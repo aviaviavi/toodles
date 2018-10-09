@@ -13,27 +13,24 @@ import           Control.Monad
 import           Control.Monad.IO.Class
 import           Data.Aeson
 import qualified Data.ByteString.Lazy.Char8 as B8S
+import           Data.Either
 import           Data.IORef
 import           Data.List
 import           Data.Maybe
-import           Data.Either
 import           Data.Monoid
 import           Data.Proxy
 import           Data.String.Utils
 import qualified Data.Text                  as T
 import           Data.Version               (showVersion)
 import           Data.Void
-import           Debug.Trace
 import           GHC.Generics
-import           Network.HTTP.Types         (status200)
-import           Network.Wai
 import           Network.Wai.Handler.Warp
-import           Paths_toodles              (version)
+import           Paths_toodles
 import           Servant
 import           Servant.HTML.Blaze
 import           System.Console.CmdArgs
-import           System.IO.HVFS
 import           System.Directory
+import           System.IO.HVFS
 import qualified System.IO.Strict           as SIO
 import           System.Path
 import           System.Path.NameManip
@@ -44,8 +41,6 @@ import qualified Text.Megaparsec.Char.Lexer as L
 import           Text.Printf
 import           Text.Read
 import           Text.Regex.Posix
-import Paths_toodles
-import qualified Data.Yaml as Y
 
 type LineNumber = Integer
 
@@ -67,7 +62,7 @@ data TodoListResult = TodoListResult
   , message :: T.Text
   } deriving (Show, Generic)
 
-data DeleteTodoRequest = DeleteTodoRequest
+newtype DeleteTodoRequest = DeleteTodoRequest
   { ids :: [Integer]
   } deriving (Show, Generic)
 
@@ -78,7 +73,7 @@ data EditTodoRequest = EditTodoRequest
   , setPriority :: Maybe Integer
   } deriving (Show, Generic)
 
-data ToodlesConfig = ToodlesConfig {
+newtype ToodlesConfig = ToodlesConfig {
   ignore :: [FilePath]
                                    } deriving (Show, Generic)
 
@@ -125,7 +120,9 @@ data ToodlesState = ToodlesState
 toodlesAPI :: Proxy ToodlesAPI
 toodlesAPI = Proxy
 
-slice from to xs = take (to - from + 1) (drop from xs)
+
+slice :: Int -> Int -> [a] -> [a]
+slice f t xs = take (t - f + 1) (drop f xs)
 
 doUntilNull :: ([a] -> IO [a]) -> [a] -> IO ()
 doUntilNull f xs = do
@@ -144,11 +141,11 @@ updateTodoLinesInFile ::
 updateTodoLinesInFile f todo = do
   let startIndex = lineNumber todo - 1
       newLines = map T.unpack $ f todo
-  fileLines <- liftIO $ lines <$> (SIO.readFile $ sourceFile todo)
+  fileLines <- liftIO $ lines <$> SIO.readFile (sourceFile todo)
   let updatedLines =
-        (slice 0 (fromIntegral $ startIndex - 1) fileLines) ++ newLines ++
+        slice 0 (fromIntegral $ startIndex - 1) fileLines ++ newLines ++
         (slice
-           ((fromIntegral startIndex) + (length $ body todo))
+           (fromIntegral startIndex + length (body todo))
            (length fileLines - 1)
            fileLines)
   liftIO $ writeFile (sourceFile todo) $ unlines updatedLines
@@ -167,7 +164,7 @@ removeAndAdjust deleteList =
                          (lineNumber t > lineNumber deleteItem)
                         then t
                              { lineNumber =
-                                 (lineNumber t) -
+                                 lineNumber t -
                                  (fromIntegral . length $ body deleteItem)
                              }
                         else t)
@@ -176,12 +173,12 @@ removeAndAdjust deleteList =
 deleteTodos :: ToodlesState -> DeleteTodoRequest -> Handler T.Text
 deleteTodos (ToodlesState ref _) req = do
   refVal@(TodoListResult r _) <- liftIO $ readIORef ref
-  let toDelete = filter (\t -> Main.id t `elem` (ids req)) r
+  let toDelete = filter (\t -> Main.id t `elem` ids req) r
   liftIO $ doUntilNull removeAndAdjust toDelete
   let updeatedResults =
         refVal
         { todos =
-            (filter (\t -> not $ Main.id t `elem` (map Main.id toDelete)) r)
+            filter (\t -> Main.id t `notElem` map Main.id toDelete) r
         }
   _ <-
     liftIO $ atomicModifyIORef' ref (const (updeatedResults, updeatedResults))
@@ -189,12 +186,12 @@ deleteTodos (ToodlesState ref _) req = do
 
 editTodos :: ToodlesState -> EditTodoRequest -> Handler T.Text
 editTodos (ToodlesState ref _) req = do
-  refVal@(TodoListResult r _) <- liftIO $ readIORef ref
+  (TodoListResult r _) <- liftIO $ readIORef ref
   let editedList =
         map
           (\t ->
              if willEditTodo req t
-               then (editTodo req t)
+               then editTodo req t
                else t)
           r
       editedFilteredList = filter (willEditTodo req) editedList
@@ -202,14 +199,16 @@ editTodos (ToodlesState ref _) req = do
   return $ T.pack "{}"
   where
     willEditTodo :: EditTodoRequest -> TodoEntry -> Bool
-    willEditTodo req entry = Main.id entry `elem` editIds req
+    willEditTodo editRequest entry = Main.id entry `elem` editIds editRequest
 
     editTodo :: EditTodoRequest -> TodoEntry -> TodoEntry
-    editTodo req entry =
-      let newAssignee = if ((isJust $ setAssignee req) && (not . T.null . fromJust $ setAssignee req)) then setAssignee req else assignee entry
-          newPriority = if isJust (setPriority req) then setPriority req else priority entry in
+    editTodo editRequest entry =
+      let newAssignee = if isJust (setAssignee editRequest) && (not . T.null . fromJust $ setAssignee editRequest)
+            then setAssignee editRequest
+            else assignee entry
+          newPriority = if isJust (setPriority editRequest) then setPriority editRequest else priority entry in
 
-        entry {assignee = newAssignee, tags = tags entry ++ (addTags req), priority = newPriority}
+        entry {assignee = newAssignee, tags = tags entry ++ addTags editRequest, priority = newPriority}
 
     recordUpdates :: MonadIO m => TodoEntry -> m ()
     recordUpdates t = void $ updateTodoLinesInFile renderTodo t
@@ -219,55 +218,52 @@ renderTodo t =
   let comment =
         fromJust $ lookup ("." <> getExtension (sourceFile t)) fileTypeToComment
       detail =
-        (T.pack "TODO(") <>
+        T.pack "TODO(" <>
         (T.pack $
          Data.String.Utils.join
            "|"
            (map T.unpack $ [fromMaybe "" $ assignee t] ++
-            listIfNotNull (fmap (\p -> (T.pack (maybe "" ((\n -> "p=" ++ n) . show) p))) priority t) ++
-            (tags t) ++
-            (map (\a -> fst a <> "=" <> snd a)) (customAttributes t))) <>
+            listIfNotNull (fmap (T.pack . maybe "" ((\n -> "p=" ++ n) . show)) priority t) ++
+            tags t ++
+            map (\a -> fst a <> "=" <> snd a) (customAttributes t))) <>
         (T.pack ") ")
       fullNoComments = mapHead (\l -> detail <> "- " <> l) $ body t
       commented = map (\l -> comment <> " " <> l) fullNoComments in
-      mapHead (\l -> (leadingText t) <> l) $
-        mapInit (\l -> (foldl (<>) "" [" " | _ <- [1..(T.length $ leadingText t)]]) <> l) commented
+      mapHead (\l -> leadingText t <> l) $
+        mapInit (\l -> foldl (<>) "" [" " | _ <- [1..(T.length $ leadingText t)]] <> l) commented
 
 mapHead :: (a -> a) -> [a] -> [a]
-mapHead f (x:xs) = [f x] ++ xs
+mapHead f (x:xs) = f x : xs
 mapHead _ xs     = xs
 
 mapInit :: (a -> a) -> [a] -> [a]
-mapInit f (x:xs) = [x] ++ (map f xs)
-mapInit _ x = x
+mapInit f (x:xs) = [x] ++ map f xs
+mapInit _ x      = x
 
+listIfNotNull :: T.Text -> [T.Text]
 listIfNotNull "" = []
-listIfNotNull s = [s]
+listIfNotNull s  = [s]
 
 root :: ToodlesState -> [T.Text] -> Handler BZ.Html
-root _ path =
+root (ToodlesState _ dPath) path =
   if null path then
-    liftIO $ BZ.preEscapedToHtml <$> readFile "./web/html/index.html"
+    liftIO $ BZ.preEscapedToHtml <$> readFile (dPath ++ "/web/html/index.html")
   else throwError $ err404 { errBody = "Not found" }
 
-testroot :: ToodlesState -> [T.Text] -> Handler T.Text
-testroot _ _ =
-  return "Hello"
-
 app :: ToodlesState -> Application
-app s = (serve toodlesAPI) $ server s
+app s = serve toodlesAPI $ server s
 
 isEntryHead :: TodoEntry -> Bool
-isEntryHead (TodoEntryHead _ _ _ _ _ _ _ _ _) = True
-isEntryHead _                               = False
+isEntryHead TodoEntryHead {} = True
+isEntryHead _                = False
 
 isBodyLine :: TodoEntry -> Bool
 isBodyLine (TodoBodyLine _) = True
 isBodyLine _                = False
 
 combineTodo :: TodoEntry -> TodoEntry -> TodoEntry
-combineTodo (TodoEntryHead i b a p n priority attrs tags leadingText) (TodoBodyLine l) =
-  TodoEntryHead i (b ++ [l]) a p n priority attrs tags leadingText
+combineTodo (TodoEntryHead i b a p n entryPriority attrs entryTags entryLeadingText) (TodoBodyLine l) =
+  TodoEntryHead i (b ++ [l]) a p n entryPriority  attrs entryTags entryLeadingText
 combineTodo _ _ = error "Can't combine todoEntry of these types"
 
 data SourceFile = SourceFile
@@ -279,7 +275,7 @@ newtype AssigneeFilterRegex =
   AssigneeFilterRegex T.Text
   deriving (Show, Data, Eq)
 
-data SearchFilter =
+newtype SearchFilter =
   AssigneeFilter AssigneeFilterRegex
   deriving (Show, Data, Eq)
 
@@ -368,34 +364,40 @@ parseAssignee = many (noneOf [')', '|', '='])
 parseDetails ::
      T.Text -> (Maybe T.Text, Maybe T.Text, [(T.Text, T.Text)], [T.Text])
 parseDetails toParse =
-  let tokens = T.splitOn "|" toParse
+  let dataTokens = T.splitOn "|" toParse
       assigneeTo =
         find
           (\t ->
-             (not (T.null t)) &&
-             (not (T.isInfixOf "=" t) && (not (T.isPrefixOf "#" t))))
-          tokens
+             not (T.null t) &&
+             not (T.isInfixOf "=" t) && not (T.isPrefixOf "#" t))
+          dataTokens
       allDetails =
         map (\[a, b] -> (a, b)) $ filter (\t -> length t == 2) $
-        map (T.splitOn "=") tokens
-      priority = snd <$> (find (\t -> (T.strip $ fst t) == "p") allDetails)
-      filteredDetails = filter (\t -> (T.strip $ fst t) /= "p") allDetails
-      tags = filter (\t -> T.isPrefixOf "#" t) tokens
-  in (assigneeTo, priority, filteredDetails, tags)
+        map (T.splitOn "=") dataTokens
+      priorityVal = snd <$> find (\t -> T.strip (fst t) == "p") allDetails
+      filteredDetails = filter (\t -> T.strip (fst t) /= "p") allDetails
+      entryTags = filter (T.isPrefixOf "#") dataTokens
+  in (assigneeTo, priorityVal, filteredDetails, entryTags)
 
+inParens :: Parser a -> Parser a
 inParens = between (symbol "(") (symbol ")")
 
+stringToMaybe :: T.Text -> Maybe T.Text
 stringToMaybe t =
   if T.null t
     then Nothing
     else Just t
 
+fst4 :: (a, b, c, d) -> a
 fst4 (x, _, _, _) = x
 
+snd4 :: (a, b, c, d) -> b
 snd4 (_, x, _, _) = x
 
+thd4 :: (a, b, c, d) -> c
 thd4 (_, _, x, _) = x
 
+fth4 :: (a, b, c, d) -> d
 fth4 (_, _, _, x) = x
 
 prefixParserForFileType extension =
@@ -410,13 +412,13 @@ prefixParserForFileType extension =
 
 parseTodoEntryHead :: FilePath -> LineNumber -> Parser TodoEntry
 parseTodoEntryHead path lineNum = do
-  leadingText <- manyTill anyChar (prefixParserForFileType $ getExtension path)
+  entryLeadingText <- manyTill anyChar (prefixParserForFileType $ getExtension path)
   _ <- symbol "TODO"
-  details <- optional $ try (inParens $ many (noneOf [')', '(']))
-  let parsedDetails = parseDetails . T.pack <$> details
-      priority = (readMaybe . T.unpack) =<< (snd4 =<< parsedDetails)
+  entryDetails <- optional $ try (inParens $ many (noneOf [')', '(']))
+  let parsedDetails = parseDetails . T.pack <$> entryDetails
+      entryPriority = (readMaybe . T.unpack) =<< (snd4 =<< parsedDetails)
       otherDetails = maybe [] thd4 parsedDetails
-      tags = maybe [] fth4 parsedDetails
+      entryTags = maybe [] fth4 parsedDetails
   _ <- optional $ symbol "-"
   _ <- optional $ symbol ":"
   b <- many anyChar
@@ -427,14 +429,14 @@ parseTodoEntryHead path lineNum = do
       (stringToMaybe . T.strip $ fromMaybe "" (fst4 =<< parsedDetails))
       path
       lineNum
-      priority
+      entryPriority
       otherDetails
-      tags
-      (T.pack leadingText)
+      entryTags
+      (T.pack entryLeadingText)
 
 parseTodo :: FilePath -> LineNumber -> Parser TodoEntry
 parseTodo path lineNum =
-  try (parseTodoEntryHead path lineNum) <|> (parseComment $ getExtension path)
+  try (parseTodoEntryHead path lineNum) <|> parseComment (getExtension path)
 
 getAllFiles :: ToodlesConfig -> FilePath -> IO [SourceFile]
 getAllFiles config path =
@@ -462,7 +464,7 @@ ignoreFile (ToodlesConfig ignoredPaths) file =
   let p = T.pack file
   in T.isInfixOf "node_modules" p || T.isSuffixOf "pb.go" p ||
      T.isSuffixOf "_pb2.py" p ||
-     any (\p -> file =~ p) ignoredPaths
+     any (\regex -> file =~ regex) ignoredPaths
 
 getExtension :: FilePath -> T.Text
 getExtension path = last $ T.splitOn "." (T.pack path)
@@ -481,19 +483,19 @@ runTodoParser (SourceFile path ls) =
   in fst groupedTodos
 
 foldTodoHelper :: ([TodoEntry], Bool) -> Maybe TodoEntry -> ([TodoEntry], Bool)
-foldTodoHelper (todos :: [TodoEntry], currentlyBuildingTodoLines :: Bool) maybeTodo
-  | isNothing maybeTodo = (todos, False)
-  | isEntryHead $ fromJust maybeTodo = (todos ++ [fromJust maybeTodo], True)
+foldTodoHelper (todoEntries :: [TodoEntry], currentlyBuildingTodoLines :: Bool) maybeTodo
+  | isNothing maybeTodo = (todoEntries, False)
+  | isEntryHead $ fromJust maybeTodo = (todoEntries ++ [fromJust maybeTodo], True)
   | isBodyLine (fromJust maybeTodo) && currentlyBuildingTodoLines =
-    (init todos ++ [combineTodo (last todos) (fromJust maybeTodo)], True)
-  | otherwise = (todos, False)
+    (init todoEntries ++ [combineTodo (last todoEntries) (fromJust maybeTodo)], True)
+  | otherwise = (todoEntries, False)
 
 prettyFormat :: TodoEntry -> String
-prettyFormat (TodoEntryHead _ l a p n priority _ _ _) =
+prettyFormat (TodoEntryHead _ l a p n entryPriority _ _ _) =
   printf
     "Assignee: %s\n%s%s:%d\n%s"
     (fromMaybe "None" a)
-    (maybe "" (\x -> "Priority: " ++ show x ++ "\n") priority)
+    (maybe "" (\x -> "Priority: " ++ show x ++ "\n") entryPriority)
     p
     n
     (unlines $ map T.unpack l)
@@ -505,10 +507,10 @@ filterSearch (Just (AssigneeFilter (AssigneeFilterRegex query))) =
   \entry -> fromMaybe "" (assignee entry) == query
 
 limitSearch :: [TodoEntry] -> Int -> [TodoEntry]
-limitSearch results limit =
+limitSearch todoList limit =
   if limit == 0
-    then results
-    else take limit results
+    then todoList
+    else take limit todoList
 
 runFullSearch :: ToodlesArgs -> IO TodoListResult
 runFullSearch userArgs =
@@ -522,9 +524,9 @@ runFullSearch userArgs =
         let parsedTodos = concatMap runTodoParser allFiles
             filteredTodos =
               filter (filterSearch (assignee_search userArgs)) parsedTodos
-            results = limitSearch filteredTodos $ limit_results userArgs
+            resultList = limitSearch filteredTodos $ limit_results userArgs
             indexedResults =
-              map (\(i, r) -> r {Main.id = i}) $ zip [1 ..] results
+              map (\(i, r) -> r {Main.id = i}) $ zip [1 ..] resultList
         return $ TodoListResult indexedResults ""
 
 getFullSearchResults :: ToodlesState -> Bool -> IO TodoListResult
@@ -534,8 +536,7 @@ getFullSearchResults (ToodlesState ref _) recompute =
       putStrLn "refreshing todo's"
       userArgs <- cmdArgs argParser >>= setAbsolutePath
       sResults <- runFullSearch userArgs
-      writtenResults <- atomicModifyIORef' ref (const (sResults, sResults))
-      return writtenResults
+      atomicModifyIORef' ref (const (sResults, sResults))
     else putStrLn "cached read" >> readIORef ref
 
 showRawFile :: ToodlesState -> Integer -> Handler BZ.Html
@@ -550,21 +551,21 @@ showRawFile (ToodlesState ref _) entryId = do
 
 addAnchors :: String -> BZ.Html
 addAnchors s =
-  let sourceLines = zip [1 ..] $ lines s
+  let codeLines = zip [1 ..] $ lines s
   in BZ.preEscapedToHtml $
      (unlines $
       map
         (\(i, l) -> printf "<pre><a name=\"line-%s\">%s</a></pre>" (show i) l)
-        sourceLines)
+        codeLines)
 
 setAbsolutePath :: ToodlesArgs -> IO ToodlesArgs
-setAbsolutePath args =
+setAbsolutePath toodlesArgs =
   let pathOrDefault =
-        if T.null . T.pack $ directory args
+        if T.null . T.pack $ directory toodlesArgs
           then "."
-          else directory args
+          else directory toodlesArgs
   in do absolute <- normalise_path <$> absolute_path pathOrDefault
-        return $ args {directory = absolute}
+        return $ toodlesArgs {directory = absolute}
 
 main :: IO ()
 main = do

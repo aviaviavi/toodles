@@ -1,10 +1,11 @@
 name:                toodles
-version:             0.1.0.0
+version:             0.1.0.1
 github:              "aviaviavi/toodles"
 license:             MIT
 author:              "Avi Press"
 maintainer:          "mail@avi.press"
 copyright:           "2018 Avi Press"
+category:            Project Management
 
 extra-source-files:
 - README.md
@@ -49,13 +50,3 @@ executables:
     - bytestring
     - regex-posix
 
-# tests:
-#   toodles-test:
-#     main:                Spec.hs
-#     source-dirs:         test
-#     ghc-options:
-#     - -threaded
-#     - -rtsopts
-#     - -with-rtsopts=-N
-#     dependencies:
-#     - toodles
