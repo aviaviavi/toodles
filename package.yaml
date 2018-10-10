@@ -1,5 +1,5 @@
 name:                toodles
-version:             0.1.0.2
+version:             0.1.0.3
 github:              "aviaviavi/toodles"
 license:             MIT
 author:              "Avi Press"
@@ -9,6 +9,8 @@ category:            Project Management
 
 extra-source-files:
 - README.md
+
+data-files:
 - web/js/app.js
 - web/js/*
 - web/html/*

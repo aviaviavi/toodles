@@ -12,7 +12,7 @@ import qualified Control.Exception          as E
 import           Control.Monad
 import           Control.Monad.IO.Class
 import           Data.Aeson
-import qualified Data.ByteString.Lazy.Char8 as B8S
+import qualified Data.ByteString.Char8      as B8SS
 import           Data.Either
 import           Data.IORef
 import           Data.List
@@ -23,6 +23,7 @@ import           Data.String.Utils
 import qualified Data.Text                  as T
 import           Data.Version               (showVersion)
 import           Data.Void
+import qualified Data.Yaml                  as Y
 import           GHC.Generics
 import           Network.Wai.Handler.Warp
 import           Paths_toodles
@@ -464,7 +465,7 @@ ignoreFile (ToodlesConfig ignoredPaths) file =
   let p = T.pack file
   in T.isInfixOf "node_modules" p || T.isSuffixOf "pb.go" p ||
      T.isSuffixOf "_pb2.py" p ||
-     any (\regex -> file =~ regex) ignoredPaths
+     any (\r -> file =~ r :: Bool) ignoredPaths
 
 getExtension :: FilePath -> T.Text
 getExtension path = last $ T.splitOn "." (T.pack path)
@@ -516,10 +517,13 @@ runFullSearch :: ToodlesArgs -> IO TodoListResult
 runFullSearch userArgs =
   let projectRoot = directory userArgs
   in do
+        putStrLn $ "configPath: " ++ projectRoot ++ "/.toodles.yaml"
         configExists <- doesFileExist $ projectRoot ++ "/.toodles.yaml"
         config <- if configExists
-          then eitherDecode' . B8S.pack <$> readFile (projectRoot ++ "/.toodles.yaml")
+          then Y.decodeEither' . B8SS.pack <$> readFile (projectRoot ++ "/.toodles.yaml")
           else return . Right $ ToodlesConfig []
+        when (isLeft config)
+          $ putStrLn $ "[WARNING] Invalid .toodles.yaml: " ++ show config
         allFiles <- getAllFiles (fromRight (ToodlesConfig []) config) projectRoot
         let parsedTodos = concatMap runTodoParser allFiles
             filteredTodos =

@@ -2,10 +2,10 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 0c94110ed79d4a78056d1cae812a11d9a0d804c4c24304ced9b15ea51db5d3db
+-- hash: 703679257a67bc8f02883cf8b85e4c1c53a777ac55e49065b72d92d2c829fb2b
 
 name:           toodles
-version:        0.1.0.2
+version:        0.1.0.3
 synopsis:       Manage the TODO entries in your code
 description:    See the README on GitHub at <https://github.com/aviaviavi/toodles#readme>
 category:       Project Management
@@ -19,6 +19,7 @@ build-type:     Simple
 cabal-version:  >= 1.10
 extra-source-files:
     README.md
+data-files:
     web/css/bulma.min.css
     web/css/font-awesome.min.css
     web/css/toodles.css

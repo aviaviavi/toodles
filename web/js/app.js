@@ -64,8 +64,7 @@ $(document).ready(function() {
           })
         }.bind(this)
       },
-// TODO(avi|p=2|key=a val) - make sorts persist refreshes
-// TODO(avi|p=2|key=a val) - make sorts persist refreshes
+      // TODO(avi|p=2|key=a val) - make sorts persist refreshes
       sortTodos: function(sortField) {
         if (!sortField || typeof sortField !== 'string') {
           sortField = this.customSortSelected

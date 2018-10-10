@@ -2,5 +2,5 @@
 # Toodles will ignore a file that matches any of the entires
 
 ignore:
-  - test.js
-  - stack-work
+- test.js
+- stack-work
