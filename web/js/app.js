@@ -56,6 +56,7 @@ $(document).ready(function() {
               }))))
 
               this.customAttributeKeys.sort()
+              this.hideDropdown()
             }.bind(this),
             error: function() {
               this.loading = false
@@ -112,6 +113,7 @@ $(document).ready(function() {
 
       editSeletedTodos: function() {
         $(".modal").addClass("is-active")
+        this.hideDropdown()
       },
 
       closeModal: function() {
@@ -132,6 +134,7 @@ $(document).ready(function() {
               this.todos = this.todos.filter(function(t) {
                 return !t.selected
               }.bind(this))
+              this.hideDropdown()
             }.bind(this)
           })
         } else {
@@ -143,11 +146,17 @@ $(document).ready(function() {
         this.todos.map(function(t) {
           t.selected = true
         })
+        this.hideDropdown()
       },
 
       toggleMenuBurger: function(ev) {
         $(".navbar-burger").toggleClass("is-active")
         $(".navbar-menu").toggleClass("is-active")
+      },
+
+      hideDropdown: function(ev) {
+        $(".navbar-menu").removeClass("is-active")
+        $(".navbar-burger").removeClass("is-active")
       },
 
       submitTodoEdits: function(){
