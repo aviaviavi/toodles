@@ -4,9 +4,10 @@
 [![Hackage](https://img.shields.io/hackage/v/toodles.svg)](https://hackage.haskell.org/package/toodles)
 
 Toodles scrapes your entire repository for TODO entries and organizes them so
-you can manage your project directly from the code. View, filter, sort, and then
-edit your TODO's with an easy to use web application. When you're done, commit
-and push your changes and share changes with your team!
+you can manage your project directly from the code. View, filter, sort, and edit
+your TODO's with an easy to use web application. When you make changes via
+toodles, the edits will be applied directly the TODO entries in your code.
+When you're done, commit and push your changes to share them with your team!
 
 ![Toodles Screenshot](https://i.imgur.com/DEwzMYn.png)
 
@@ -76,8 +77,10 @@ support for this to be user configurable
 
 ### Installing
 
-You can get toodles by installing with stack or cabal. If there is desire for it I can 
-look into precompiled distribution.
+You can get toodles by installing with [stack](https://docs.haskellstack.org) or
+[cabal](https://www.haskell.org/cabal/download.html). Run `stack install
+toodles` or `cabal install toodles` and you're done! If there is desire for it I
+can look into precompiled distribution.
 
 ### Running
 

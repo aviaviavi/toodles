@@ -5,7 +5,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators       #-}
 
--- TODO(avi|p=3|#techdebt) - break this into modules
+-- TODO(avi|p=3|#cleanup) - break this into modules
 module Main where
 
 import qualified Control.Exception          as E
@@ -361,7 +361,7 @@ parsePriority = do
 parseAssignee :: Parser String
 parseAssignee = many (noneOf [')', '|', '='])
 
--- TODO(avi|p=3|#techdebt) - fix and type this better
+-- TODO(avi|p=3|#cleanup) - fix and type this better
 parseDetails ::
      T.Text -> (Maybe T.Text, Maybe T.Text, [(T.Text, T.Text)], [T.Text])
 parseDetails toParse =
@@ -445,7 +445,7 @@ getAllFiles config path =
     (do putStrLn $ printf "Running toodles for path: %s" path
         files <- recurseDir SystemFS path
         let validFiles = filter (isValidFile config) files
-        -- TODO(avi|p=3|#techdebt) - make sure it's a file first
+        -- TODO(avi|p=3|#cleanup) - make sure it's a file first
         mapM
           (\f ->
              SourceFile f . (map T.pack . lines) <$>
@@ -483,10 +483,14 @@ runTodoParser (SourceFile path ls) =
       groupedTodos = foldl foldTodoHelper ([], False) parsedTodoLines
   in fst groupedTodos
 
+-- fold fn to concatenate todos that a multiple, single line comments
 foldTodoHelper :: ([TodoEntry], Bool) -> Maybe TodoEntry -> ([TodoEntry], Bool)
 foldTodoHelper (todoEntries :: [TodoEntry], currentlyBuildingTodoLines :: Bool) maybeTodo
+  -- We're not on a todo line, keep going
   | isNothing maybeTodo = (todoEntries, False)
+  -- We see the start of a new todo
   | isEntryHead $ fromJust maybeTodo = (todoEntries ++ [fromJust maybeTodo], True)
+  -- We a body line of a todo to concatenate to the current one
   | isBodyLine (fromJust maybeTodo) && currentlyBuildingTodoLines =
     (init todoEntries ++ [combineTodo (last todoEntries) (fromJust maybeTodo)], True)
   | otherwise = (todoEntries, False)
