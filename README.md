@@ -74,6 +74,19 @@ support for this to be user configurable
 - Typescript
 - Yaml
 
+### Installing
+
+You can get toodles by installing with stack or cabal. If there is desire for it I can 
+look into precompiled distribution.
+
+### Running
+
+```bash
+# $ toodles -d <root directory of your project> -p <port to run server>
+# for more info run:
+# $ toodles --help
+$ toodles -d /path/to/your/project -p 9001
+```
 
 ### Current Limitations
 
@@ -88,5 +101,4 @@ Due to the parser's current simplicity, Toodles won't see TODO's in multiline in
 
 */
 ```
-
 
