@@ -12,7 +12,8 @@ $(document).ready(function() {
         customAttributeKeys: [],
         setAssignee: "",
         addTags: "",
-        setPriority: null
+        setPriority: null,
+        lastSortField: null,
       }
     },
     created: function() {
@@ -47,8 +48,13 @@ $(document).ready(function() {
               })
               console.log("todos", this.todos)
               this.loading = false
+
               if (!recompute) {
                 this.sortTodos('priority')
+              } else {
+                const field = this.lastSortField || 'priority'
+                this.sortMultiplier[field] *= -1 // reset the multipler
+                this.sortTodos(field)
               }
 
               this.customAttributeKeys = Array.from(new Set([].concat.apply([], this.todos.map(t => {
@@ -65,8 +71,9 @@ $(document).ready(function() {
           })
         }.bind(this)
       },
-      // TODO(avi|p=2|key=a val) - make sorts persist refreshes
+
       sortTodos: function(sortField) {
+        this.lastSortField = sortField
         if (!sortField || typeof sortField !== 'string') {
           sortField = this.customSortSelected
         }

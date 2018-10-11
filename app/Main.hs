@@ -121,7 +121,6 @@ data ToodlesState = ToodlesState
 toodlesAPI :: Proxy ToodlesAPI
 toodlesAPI = Proxy
 
-
 slice :: Int -> Int -> [a] -> [a]
 slice f t xs = take (t - f + 1) (drop f xs)
 
