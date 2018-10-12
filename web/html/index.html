@@ -1,19 +1,22 @@
 <head>
+    <title>Toodles</title>
     <script src="/static/js/vue.js"></script>
     <script src="/static/js/jquery-3.3.1.min.js"></script>
     <script src="/static/js/app.js"></script>
     <link rel="stylesheet" href="/static/css/bulma.min.css">
     <link rel="stylesheet" href="/static/css/toodles.css">
     <link rel="stylesheet" href="/static/css/font-awesome.min.css">
+    <link rel="shortcut icon" type="image/png" href="/static/img/favicon.png"/>
 </head>
 
 <body>
     <div id="top-div">
         <nav class="navbar" role="navigation" aria-label="main navigation">
             <div class="navbar-brand">
-                <a class="navbar-item" href="#">
-                    Toodles
-                </a>
+                <div class="navbar-item" href="#">
+                    <span><img src="/static/img/favicon.png" alt="favicon" height="25" width="25"></span>
+                    <span class="toodles-nav-title-text">Toodles</span>
+                </div>
                 <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" v-on:click="toggleMenuBurger">
                     <span aria-hidden="true"></span>
                     <span aria-hidden="true"></span>

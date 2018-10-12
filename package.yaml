@@ -1,5 +1,5 @@
 name:                toodles
-version:             0.1.0.4
+version:             0.1.0.5
 github:              "aviaviavi/toodles"
 license:             MIT
 author:              "Avi Press"
@@ -16,6 +16,7 @@ data-files:
 - web/html/*
 - web/css/*
 - web/fonts/*
+- web/img/*
 
 synopsis:            Manage the TODO entries in your code
 description:         See the README on GitHub at <https://github.com/aviaviavi/toodles#readme>

@@ -128,3 +128,7 @@ td, th {
 .top-div {
     overflow-x: scroll;
 }
+
+.toodles-nav-title-text {
+    padding-left: 5px;
+}

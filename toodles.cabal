@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a2afad22ce77b0d765b58bb81080fe61bced7c38ceb5c79a35a19c50831faf2a
+-- hash: e420b834a7ebff7a6ed5a30b742706232878d1a5d6e43aaa4ef184e552f81968
 
 name:           toodles
 version:        0.1.0.4
@@ -26,6 +26,7 @@ data-files:
     web/fonts/fontawesome-webfont.woff
     web/fonts/fontawesome-webfont.woff2
     web/html/index.html
+    web/img/favicon.png
     web/js/app.js
     web/js/jquery-3.3.1.min.js
     web/js/vue.js
