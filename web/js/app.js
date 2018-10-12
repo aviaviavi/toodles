@@ -14,6 +14,9 @@ $(document).ready(function() {
         addTags: "",
         setPriority: null,
         lastSortField: null,
+        addKeyVals: "",
+        addKeyValParseError: false,
+        nothingFilledError: false,
       }
     },
     created: function() {
@@ -167,6 +170,23 @@ $(document).ready(function() {
       },
 
       submitTodoEdits: function(){
+        this.keyValParseError = false
+        this.nothingFilledError = false
+
+        if (!(this.addKeyVals || this.setAssignee || this.setPriority || this.addTags)) {
+          this.nothingFilledError = true
+          return
+        }
+        const keyVals =
+              this.addKeyVals.trim() === "" ?
+              [] :
+              this.addKeyVals.split(",").map(p => p.split(":").map(t => t.trim()))
+        const keyValError = keyVals.some(p => p && p.length !== 2)
+        if (keyValError) {
+          this.addKeyValParseError = true
+          return
+        }
+
         $.ajax({
           url: "/todos/edit",
           type: "POST",
@@ -182,7 +202,8 @@ $(document).ready(function() {
                   "#" + tag
 
               }),
-            setPriority: parseInt(this.setPriority)
+            setPriority: parseInt(this.setPriority),
+            addKeyVals: keyVals,
           }),
           success: function(data){
             this.todos.filter(function(t) {
@@ -197,6 +218,12 @@ $(document).ready(function() {
                 }
                 if (this.setPriority) {
                   t.priority = parseInt(this.setPriority)
+                }
+
+                if (this.addKeyVals) {
+                  for (var i = 0; i < keyVals.length; i++) {
+                    t.customAttributes[keyVals[i][0]] = keyVals[i][1]
+                  }
                 }
              }.bind(this))
             this.closeModal()

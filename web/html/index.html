@@ -59,24 +59,33 @@
                     <div class="field edit-todo-field-input">
                         <label class="label">Set Assignee</label>
                         <div class="control">
-                            <input class="input" type="text" placeholder="Assignee" v-model="setAssignee">
+                            <input class="input" type="text" placeholder="Assignee" v-model="setAssignee" @keyup.enter="submitTodoEdits">
                         </div>
                     </div>
 
                     <div class="field edit-todo-field-input">
                         <label class="label">Add Tag (comma separated)</label>
                         <div class="control">
-                            <input class="input" type="text" placeholder="#bug,#techdebt,..." v-model="addTags">
+                            <input class="input" type="text" placeholder="#bug,#techdebt,..." v-model="addTags" @keyup.enter="submitTodoEdits">
+                        </div>
+                    </div>
+
+                    <div class="field edit-todo-field-input">
+                        <label class="label">Add Custom Attributes (comma separated)</label>
+                        <div class="input-error key-val-parse-error" v-show="addKeyValParseError">Parse error, check your formatting and try again</div>
+                        <div class="control">
+                            <input class="input" type="text" placeholder="key1:val1,key2:val2,..." v-model="addKeyVals" @keyup.enter="submitTodoEdits">
                         </div>
                     </div>
 
                     <div class="field edit-todo-field-input">
                         <label class="label">Set Priority</label>
                         <div class="control">
-                            <input class="input" type="number" placeholder="Number" v-model="setPriority">
+                            <input class="input" type="number" placeholder="Number" v-model="setPriority" @keyup.enter="submitTodoEdits">
                         </div>
                     </div>
 
+                    <div class="input-error nothing-filled-error" v-show="nothingFilledError">Add some changes before submitting</div>
                     <button class="button is-primary submit-todo-edits" v-on:click="submitTodoEdits">Submit</button>
                 </div>
             </div>

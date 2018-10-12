@@ -5,7 +5,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators       #-}
 
--- TODO(avi|p=3|#cleanup) - break this into modules
+-- TODO(avi|p=3|#cleanup|key=val|k3y=asdf) - break this into modules
 module Main where
 
 import qualified Control.Exception          as E
@@ -71,6 +71,7 @@ data EditTodoRequest = EditTodoRequest
   { editIds     :: [Integer]
   , setAssignee :: Maybe T.Text
   , addTags     :: [T.Text]
+  , addKeyVals  :: [(T.Text, T.Text)]
   , setPriority :: Maybe Integer
   } deriving (Show, Generic)
 
@@ -208,7 +209,10 @@ editTodos (ToodlesState ref _) req = do
             else assignee entry
           newPriority = if isJust (setPriority editRequest) then setPriority editRequest else priority entry in
 
-        entry {assignee = newAssignee, tags = tags entry ++ addTags editRequest, priority = newPriority}
+        entry {assignee = newAssignee,
+               tags = tags entry ++ addTags editRequest,
+               priority = newPriority,
+               customAttributes = nub $ customAttributes entry ++ addKeyVals editRequest}
 
     recordUpdates :: MonadIO m => TodoEntry -> m ()
     recordUpdates t = void $ updateTodoLinesInFile renderTodo t
