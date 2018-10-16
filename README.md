@@ -84,16 +84,24 @@ can look into precompiled distribution.
 
 ### Running
 
+Invoking `toodles` with no arguments will treat the current directory as the
+project root and will start a server on port 9001. You can set these with the
+`-d` and `-p` flags, respectively.
+
+
 ```bash
 # $ toodles -d <root directory of your project> -p <port to run server>
 # for more info run:
 # $ toodles --help
 $ toodles -d /path/to/your/project -p 9001
+# or simply
+$ toodles
 ```
 
 ### Current Limitations
 
-Due to the parser's current simplicity, Toodles won't see TODO's in multiline initiated comment. For instance in javascript
+Due to the parser's current simplicity, Toodles won't see TODO's in multiline
+initiated comment. For instance in javascript
 
 ```javascript
 // TODO(#bug) this would be parsed

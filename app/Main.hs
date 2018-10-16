@@ -3,6 +3,7 @@
 {-# LANGUAGE DeriveGeneric       #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+
 {-# LANGUAGE TypeOperators       #-}
 
 -- TODO(avi|p=3|#cleanup|key=val|k3y=asdf) - break this into modules
@@ -288,6 +289,7 @@ data ToodlesArgs = ToodlesArgs
   , assignee_search :: Maybe SearchFilter
   , limit_results   :: Int
   , port            :: Maybe Int
+  , no_server       :: Bool
   } deriving (Show, Data, Typeable, Eq)
 
 argParser :: ToodlesArgs
@@ -297,6 +299,7 @@ argParser =
   , assignee_search = def &= help "Filter todo's by assignee"
   , limit_results = def &= help "Limit number of search results"
   , port = def &= help "Run server on port"
+  , no_server = def &= help "Output matching todos to the command line and exit"
   } &=
   summary ("toodles " ++ showVersion version) &=
   program "toodles" &=
@@ -524,7 +527,6 @@ runFullSearch :: ToodlesArgs -> IO TodoListResult
 runFullSearch userArgs =
   let projectRoot = directory userArgs
   in do
-        putStrLn $ "configPath: " ++ projectRoot ++ "/.toodles.yaml"
         configExists <- doesFileExist $ projectRoot ++ "/.toodles.yaml"
         config <- if configExists
           then Y.decodeEither' . B8SS.pack <$> readFile (projectRoot ++ "/.toodles.yaml")
@@ -582,11 +584,11 @@ main :: IO ()
 main = do
   userArgs <- cmdArgs argParser >>= setAbsolutePath
   sResults <- runFullSearch userArgs
-  if isJust $ port userArgs
-    then do
-      let webPort = fromJust $ port userArgs
-      ref <- newIORef sResults
-      dataDir <- (++ "/web") <$> getDataDir
-      putStrLn $ "serving on " ++ show webPort
-      run webPort $ app $ ToodlesState ref dataDir
-    else mapM_ (putStrLn . prettyFormat) $ todos sResults
+  case userArgs of
+    (ToodlesArgs _ _ _ _ True) -> mapM_ (putStrLn . prettyFormat) $ todos sResults
+    _ -> do
+          let webPort = fromMaybe 9001 $ port userArgs
+          ref <- newIORef sResults
+          dataDir <- (++ "/web") <$> getDataDir
+          putStrLn $ "serving on " ++ show webPort
+          run webPort $ app $ ToodlesState ref dataDir
