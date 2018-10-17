@@ -2,12 +2,12 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a46eb34740bf8e5db0cdb8a7220efedb4692faa03009652a13c7b8b68cc16caf
+-- hash: 7f3bb1a7a071ad693223647558ec8c15dc648639724a366eec73cc7c5f9477a9
 
 name:           toodles
-version:        0.1.0.8
+version:        0.1.0.9
 synopsis:       Manage the TODO entries in your code
-description:    "Toodles scrapes your entire repository for TODO entries and organizes them so you can manage your project directly from the code. View, filter, sort, and edit your TODO's with an easy to use web application. When you make changes via toodles, the edits will be applied directly the TODO entries in your code. When you're done, commit and push your changes to share them with your team!"
+description:    Toodles scrapes your entire repository for TODO entries and organizes them so you can manage your project directly from the code. View, filter, sort, and edit your TODO\'s with an easy to use web application. When you make changes via toodles, the edits will be applied directly the TODO entries in your code. When you\'re done, commit and push your changes to share them with your team!
 category:       Project Management
 homepage:       https://github.com/aviaviavi/toodles#readme
 bug-reports:    https://github.com/aviaviavi/toodles/issues
@@ -45,7 +45,7 @@ executable toodles
   build-depends:
       MissingH >=1.4.0.1
     , aeson >=1.2.4.0
-    , base >=4.7 && <5
+    , base >=4.9.1 && <5
     , blaze-html >=0.9.1.1
     , bytestring >=0.10.8.2
     , cmdargs >=0.10.20
