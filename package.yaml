@@ -1,5 +1,5 @@
 name:                toodles
-version:             0.1.0.7
+version:             0.1.0.8
 github:              "aviaviavi/toodles"
 license:             MIT
 author:              "Avi Press"
@@ -19,7 +19,14 @@ data-files:
 - web/img/*
 
 synopsis:            Manage the TODO entries in your code
-description:         See the README on GitHub at <https://github.com/aviaviavi/toodles#readme>
+description:
+  >
+    "Toodles scrapes your entire repository for TODO entries and organizes them so
+    you can manage your project directly from the code. View, filter, sort, and edit
+    your TODO's with an easy to use web application. When you make changes via
+    toodles, the edits will be applied directly the TODO entries in your code.
+    When you're done, commit and push your changes to share them with your team!"
+ 
 
 dependencies:
 - base >= 4.7 && < 5
@@ -33,23 +40,22 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - text
-    - megaparsec
-    - directory
-    - filepath
-    - MissingH
-    - cmdargs
-    - strict
-    - servant
-    - servant-blaze
-    - blaze-html
-    - servant-server
-    - transformers
-    - aeson
-    - yaml
-    - wai
-    - warp
-    - http-types
-    - bytestring
-    - regex-posix
-
+    - text >= 1.2.3.0
+    - megaparsec >= 6.4.1
+    - directory >= 1.3.0.2
+    - filepath >= 1.4.1.2
+    - MissingH >= 1.4.0.1
+    - cmdargs >= 0.10.20
+    - strict >= 0.3.2
+    - servant >= 0.13.0.1
+    - servant-blaze >= 0.8
+    - blaze-html >= 0.9.1.1
+    - servant-server >= 0.13.0.1
+    - transformers >= 0.5.2.0
+    - aeson >= 1.2.4.0
+    - yaml >= 0.8.32
+    - wai >= 3.2.1.2
+    - warp >= 3.2.23
+    - http-types >= 0.12.1
+    - bytestring >= 0.10.8.2
+    - regex-posix >= 0.95.2
