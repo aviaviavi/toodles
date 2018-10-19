@@ -77,10 +77,10 @@ support for this to be user configurable
 
 ### Installing
 
-You can get toodles by installing with [stack](https://docs.haskellstack.org) or
-[cabal](https://www.haskell.org/cabal/download.html). Run `stack install
-toodles` or `cabal install toodles` and you're done! If there is desire for it I
-can look into precompiled distribution.
+The easiest way to get toodles is via [stack](https://docs.haskellstack.org).
+Just a `stack install toodles` and you're done! Alternatively, with GHC 8.4.3
+you can use [cabal](https://www.haskell.org/cabal/download.html). If there is
+desire for it I can look into precompiled distribution.
 
 ### Running
 
