@@ -29,7 +29,7 @@ description:
  
 
 dependencies:
-- base >= 4.9.1 && < 5
+- base >= 4.0 && < 5
 
 executables:
   toodles:
@@ -40,22 +40,23 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - text >= 1.2.3.0
-    - megaparsec >= 6.4.1
-    - directory >= 1.3.0.2
-    - filepath >= 1.4.1.2
-    - MissingH >= 1.4.0.1
-    - cmdargs >= 0.10.20
-    - strict >= 0.3.2
-    - servant >= 0.13.0.1
-    - servant-blaze >= 0.8
-    - blaze-html >= 0.9.1.1
-    - servant-server >= 0.13.0.1
-    - transformers >= 0.5.2.0
-    - aeson >= 1.2.4.0
-    - yaml >= 0.8.32
-    - wai >= 3.2.1.2
-    - warp >= 3.2.23
-    - http-types >= 0.12.1
-    - bytestring >= 0.10.8.2
-    - regex-posix >= 0.95.2
+    - MissingH ==1.4.0.1
+    - aeson ==1.2.4.0
+    - base ==4.10.1.0
+    - blaze-html ==0.9.1.1
+    - bytestring ==0.10.8.2
+    - cmdargs ==0.10.20
+    - directory ==1.3.0.2
+    - filepath ==1.4.1.2
+    - http-types ==0.12.1
+    - megaparsec ==6.4.1
+    - regex-posix ==0.95.2
+    - servant ==0.13.0.1
+    - servant-blaze ==0.8
+    - servant-server ==0.13.0.1
+    - strict ==0.3.2
+    - text ==1.2.3.0
+    - transformers ==0.5.2.0
+    - wai ==3.2.1.2
+    - warp ==3.2.23
+    - yaml ==0.8.32

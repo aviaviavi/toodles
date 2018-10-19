@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 7f3bb1a7a071ad693223647558ec8c15dc648639724a366eec73cc7c5f9477a9
+-- hash: 9e777aad101ecb2766f89690341ba0a2001bdc20d300d3cee18f90e0d70bab94
 
 name:           toodles
 version:        0.1.0.9
@@ -43,24 +43,24 @@ executable toodles
       app
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      MissingH >=1.4.0.1
-    , aeson >=1.2.4.0
-    , base >=4.9.1 && <5
-    , blaze-html >=0.9.1.1
-    , bytestring >=0.10.8.2
-    , cmdargs >=0.10.20
-    , directory >=1.3.0.2
-    , filepath >=1.4.1.2
-    , http-types >=0.12.1
-    , megaparsec >=6.4.1
-    , regex-posix >=0.95.2
-    , servant >=0.13.0.1
-    , servant-blaze >=0.8
-    , servant-server >=0.13.0.1
-    , strict >=0.3.2
-    , text >=1.2.3.0
-    , transformers >=0.5.2.0
-    , wai >=3.2.1.2
-    , warp >=3.2.23
-    , yaml >=0.8.32
+      MissingH ==1.4.0.1
+    , aeson ==1.2.4.0
+    , base ==4.10.1.0
+    , blaze-html ==0.9.1.1
+    , bytestring ==0.10.8.2
+    , cmdargs ==0.10.20
+    , directory ==1.3.0.2
+    , filepath ==1.4.1.2
+    , http-types ==0.12.1
+    , megaparsec ==6.4.1
+    , regex-posix ==0.95.2
+    , servant ==0.13.0.1
+    , servant-blaze ==0.8
+    , servant-server ==0.13.0.1
+    , strict ==0.3.2
+    , text ==1.2.3.0
+    , transformers ==0.5.2.0
+    , wai ==3.2.1.2
+    , warp ==3.2.23
+    , yaml ==0.8.32
   default-language: Haskell2010
