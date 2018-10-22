@@ -54,8 +54,7 @@ Currently via config you can:
 
 ### Scanned Languages
 
-Submit a PR if you'd like a language to be added. There will eventually be
-support for this to be user configurable
+These languages will be scanned for any TODO's:
 
 - C/C++
 - Elixir
@@ -74,6 +73,9 @@ support for this to be user configurable
 - Swift
 - Typescript
 - Yaml
+
+Submit a PR if you'd like a language to be added. There will eventually be
+support for this to be user configurable
 
 ### Installing
 
