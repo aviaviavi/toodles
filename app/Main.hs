@@ -184,7 +184,7 @@ deleteTodos (ToodlesState ref _) req = do
         }
   _ <-
     liftIO $ atomicModifyIORef' ref (const (updeatedResults, updeatedResults))
-  return $ T.pack "{}"
+  return "{}"
 
 editTodos :: ToodlesState -> EditTodoRequest -> Handler T.Text
 editTodos (ToodlesState ref _) req = do
@@ -198,7 +198,7 @@ editTodos (ToodlesState ref _) req = do
           r
       editedFilteredList = filter (willEditTodo req) editedList
   _ <- mapM_ recordUpdates editedFilteredList
-  return $ T.pack "{}"
+  return "{}"
   where
     willEditTodo :: EditTodoRequest -> TodoEntry -> Bool
     willEditTodo editRequest entry = Main.id entry `elem` editIds editRequest
@@ -223,7 +223,7 @@ renderTodo t =
   let comment =
         fromJust $ lookup ("." <> getExtension (sourceFile t)) fileTypeToComment
       detail =
-        T.pack "TODO (" <>
+        "TODO (" <>
         (T.pack $
          Data.String.Utils.join
            "|"
@@ -231,7 +231,7 @@ renderTodo t =
             listIfNotNull (fmap (T.pack . maybe "" ((\n -> "p=" ++ n) . show)) priority t) ++
             tags t ++
             map (\a -> fst a <> "=" <> snd a) (customAttributes t))) <>
-        (T.pack ") ")
+        ") "
       fullNoComments = mapHead (\l -> detail <> "- " <> l) $ body t
       commented = map (\l -> comment <> " " <> l) fullNoComments in
       mapHead (\l -> leadingText t <> l) $
