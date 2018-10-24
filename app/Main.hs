@@ -52,11 +52,15 @@ data TodoEntry
                   , sourceFile       :: FilePath
                   , lineNumber       :: LineNumber
                   , priority         :: Maybe Integer
+                  , flag             :: Flag
                   , customAttributes :: [(T.Text, T.Text)]
                   , tags             :: [T.Text]
                   , leadingText      :: T.Text }
   | TodoBodyLine T.Text
   deriving (Show, Generic)
+
+data Flag = TODO | FIXME | XXX
+          deriving (Show, Generic)
 
 data TodoListResult = TodoListResult
   { todos   :: [TodoEntry]
@@ -82,6 +86,10 @@ newtype ToodlesConfig = ToodlesConfig {
 instance FromJSON TodoEntry
 
 instance ToJSON TodoEntry
+
+instance FromJSON Flag
+
+instance ToJSON Flag
 
 instance FromJSON TodoListResult
 
@@ -222,7 +230,7 @@ renderTodo t =
   let comment =
         fromJust $ lookup ("." <> getExtension (sourceFile t)) fileTypeToComment
       detail =
-        "TODO (" <>
+        renderFlag (flag t) <> " (" <>
         (T.pack $
          Data.String.Utils.join
            "|"
@@ -232,8 +240,13 @@ renderTodo t =
             map (\a -> fst a <> "=" <> snd a) (customAttributes t))) <>
         ") "
       fullNoComments = mapHead (\l -> detail <> "- " <> l) $ body t
-      commented = map (\l -> comment <> " " <> l) fullNoComments in
-      mapHead (\l -> leadingText t <> l) $
+      commented = map (\l -> comment <> " " <> l) fullNoComments
+
+      renderFlag :: Flag -> T.Text
+      renderFlag TODO  = "TODO"
+      renderFlag FIXME = "FIXME"
+      renderFlag XXX   = "XXX"
+  in mapHead (\l -> leadingText t <> l) $
         mapInit (\l -> foldl (<>) "" [" " | _ <- [1..(T.length $ leadingText t)]] <> l) commented
 
 mapHead :: (a -> a) -> [a] -> [a]
@@ -266,8 +279,8 @@ isBodyLine (TodoBodyLine _) = True
 isBodyLine _                = False
 
 combineTodo :: TodoEntry -> TodoEntry -> TodoEntry
-combineTodo (TodoEntryHead i b a p n entryPriority attrs entryTags entryLeadingText) (TodoBodyLine l) =
-  TodoEntryHead i (b ++ [l]) a p n entryPriority  attrs entryTags entryLeadingText
+combineTodo (TodoEntryHead i b a p n entryPriority f attrs entryTags entryLeadingText) (TodoBodyLine l) =
+  TodoEntryHead i (b ++ [l]) a p n entryPriority f attrs entryTags entryLeadingText
 combineTodo _ _ = error "Can't combine todoEntry of these types"
 
 data SourceFile = SourceFile
@@ -350,6 +363,11 @@ lexeme = L.lexeme space
 symbol :: T.Text -> Parser T.Text
 symbol = L.symbol space
 
+parseFlag :: Parser Flag
+parseFlag =   try (symbol "TODO"  *> pure TODO )
+          <|> try (symbol "FIXME" *> pure FIXME)
+          <|> (symbol "XXX"   *> pure XXX  )
+
 parseComment :: T.Text -> Parser TodoEntry
 parseComment extension
  = do
@@ -421,7 +439,7 @@ prefixParserForFileType extension =
 parseTodoEntryHead :: FilePath -> LineNumber -> Parser TodoEntry
 parseTodoEntryHead path lineNum = do
   entryLeadingText <- manyTill anyChar (prefixParserForFileType $ getExtension path)
-  _ <- symbol "TODO"
+  flag <- parseFlag
   entryDetails <- optional $ try (inParens $ many (noneOf [')', '(']))
   let parsedDetails = parseDetails . T.pack <$> entryDetails
       entryPriority = (readMaybe . T.unpack) =<< (snd4 =<< parsedDetails)
@@ -438,6 +456,7 @@ parseTodoEntryHead path lineNum = do
       path
       lineNum
       entryPriority
+      flag
       otherDetails
       entryTags
       (T.pack entryLeadingText)
