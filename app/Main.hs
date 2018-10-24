@@ -522,13 +522,14 @@ foldTodoHelper (todoEntries :: [TodoEntry], currentlyBuildingTodoLines :: Bool) 
   | otherwise = (todoEntries, False)
 
 prettyFormat :: TodoEntry -> String
-prettyFormat (TodoEntryHead _ l a p n entryPriority _ _ _) =
+prettyFormat (TodoEntryHead _ l a p n entryPriority f _ _ _) =
   printf
-    "Assignee: %s\n%s%s:%d\n%s"
+    "Assignee: %s\n%s%s:%d\n%s - %s"
     (fromMaybe "None" a)
     (maybe "" (\x -> "Priority: " ++ show x ++ "\n") entryPriority)
     p
     n
+    (show f)
     (unlines $ map T.unpack l)
 prettyFormat (TodoBodyLine _) = error "Invalid type for prettyFormat"
 
