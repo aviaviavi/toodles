@@ -223,7 +223,7 @@ renderTodo t =
   let comment =
         fromJust $ lookup ("." <> getExtension (sourceFile t)) fileTypeToComment
       detail =
-        T.pack "TODO(" <>
+        T.pack "TODO (" <>
         (T.pack $
          Data.String.Utils.join
            "|"
