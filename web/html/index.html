@@ -124,6 +124,7 @@
                                     <i class="fa fa-sort"></i>
                                 </span>
                             </th>
+                            <th>Flag</th>
                             <th class="todo-item-body">Body</th>
                             <th>Assignee</th>
                             <th>Tags</th>
@@ -134,6 +135,7 @@
                         <td class="todo-item-priority" >
                             <div v-show="todo.priority !== undefined">{{ todo.priority }}</div>
                         </td>
+                        <td class="todo-item-flag" >{{ todo.flag }}</td>
                         <td class='todo-item-body'>
                             <div class="todo-source-link"><a :href="'/source_file/' + todo.id + '#line-' + todo.lineNumber" target="_blank">{{ todo.sourceFile }}:{{ todo.lineNumber}}</a></div>
                             <div>{{ todo.body }}</div>

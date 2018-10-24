@@ -38,6 +38,7 @@ $(document).ready(function() {
                   lineNumber: t.lineNumber,
                   sourceFile: t.sourceFile,
                   priority: t.priority,
+                  flag: t.flag,
                   tags: t.tags,
                   customAttributes: t.customAttributes.reduce((acc, curr) => {
                     console.log(acc, curr)
