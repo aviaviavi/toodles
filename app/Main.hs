@@ -421,6 +421,7 @@ parseTodoEntryHead :: FilePath -> LineNumber -> Parser TodoEntry
 parseTodoEntryHead path lineNum = do
   entryLeadingText <- manyTill anyChar (prefixParserForFileType $ getExtension path)
   _ <- symbol "TODO"
+  space
   entryDetails <- optional $ try (inParens $ many (noneOf [')', '(']))
   let parsedDetails = parseDetails . T.pack <$> entryDetails
       entryPriority = (readMaybe . T.unpack) =<< (snd4 =<< parsedDetails)
