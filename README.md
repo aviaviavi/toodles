@@ -63,6 +63,7 @@ These languages will be scanned for any TODO's:
 - Haskell
 - Java
 - Javascript
+- Kotlin
 - Objective-C
 - Protobuf
 - Python
