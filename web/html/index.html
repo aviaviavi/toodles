@@ -74,7 +74,7 @@
                         <label class="label">Add Custom Attributes (comma separated)</label>
                         <div class="input-error key-val-parse-error" v-show="addKeyValParseError">Parse error, check your formatting and try again</div>
                         <div class="control">
-                            <input class="input" type="text" placeholder="key1:val1,key2:val2,..." v-model="addKeyVals" @keyup.enter="submitTodoEdits">
+                            <input class="input" type="text" placeholder="key1=val1,key2=val2,..." v-model="addKeyVals" @keyup.enter="submitTodoEdits">
                         </div>
                     </div>
 
@@ -142,7 +142,7 @@
                         <td class="todo-item-customAttributes">
                             <div v-show="Object.keys(todo.customAttributes).length" class="attribute-block">
                                 <span v-for="entry in Object.entries(todo.customAttributes)" class="attribute-item" @change="updateTodo('here')">
-                                    <span >{{entry[0]}}</span>: <span >{{entry[1]}}</span>
+                                    <span >{{entry[0]}}</span>=<span >{{entry[1]}}</span>
                                 </span>
                             </div>
                             <div class="tag-block" v-show="Object.keys(todo.tags).length">

@@ -6,7 +6,7 @@
 
 {-# LANGUAGE TypeOperators       #-}
 
--- TODO(avi|p=3|#cleanup|key=val|k3y=asdf) - break this into modules
+-- TODO (avi|p=3|#cleanup|key=val|k3y=asdf|key=1) - break this into modules
 module Main where
 
 import qualified Control.Exception          as E

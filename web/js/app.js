@@ -30,7 +30,6 @@ $(document).ready(function() {
             type: "GET",
             dataType: "json",
             success: function(data) {
-              console.log("here", data)
               this.todos = data.todos.map(t => {
                 return {
                   id: t.id,
@@ -180,7 +179,7 @@ $(document).ready(function() {
         const keyVals =
               this.addKeyVals.trim() === "" ?
               [] :
-              this.addKeyVals.split(",").map(p => p.split(":").map(t => t.trim()))
+              this.addKeyVals.split(",").map(p => p.split("=").map(t => t.trim()))
         const keyValError = keyVals.some(p => p && p.length !== 2)
         if (keyValError) {
           this.addKeyValParseError = true
