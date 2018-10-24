@@ -2,10 +2,10 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 822a0d380b80b75cb433393286d0836a7e3894d30c688128b4209bb67243bc0b
+-- hash: b78f8aca290f48ca2debb6a38b70dbb9636edb530c2c0b2b2d32d57df489edf1
 
 name:           toodles
-version:        0.1.0.10
+version:        0.1.0.11
 synopsis:       Manage the TODO entries in your code
 description:    Toodles scrapes your entire repository for TODO entries and organizes them so you can manage your project directly from the code. View, filter, sort, and edit your TODO\'s with an easy to use web application. When you make changes via toodles, the edits will be applied directly the TODO entries in your code. When you\'re done, commit and push your changes to share them with your team!
 category:       Project Management
