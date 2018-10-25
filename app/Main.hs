@@ -13,12 +13,14 @@ import qualified Control.Exception          as E
 import           Control.Monad
 import           Control.Monad.IO.Class
 import           Data.Aeson
+import           Data.Aeson.Types           (typeMismatch)
 import           Data.Either
 import           Data.IORef
 import           Data.List
 import           Data.Maybe
 import           Data.Monoid
 import           Data.Proxy
+import           Data.String                (IsString)
 import           Data.String.Utils
 import qualified Data.Text                  as T
 import           Data.Version               (showVersion)
@@ -59,8 +61,12 @@ data TodoEntry
   | TodoBodyLine T.Text
   deriving (Show, Generic)
 
-data Flag = TODO | FIXME | XXX
+data Flag = TODO | FIXME | XXX | UF UserFlag
           deriving (Show, Generic)
+
+newtype UserFlag = UserFlag T.Text
+                 deriving ( Show, Data, Eq
+                          , Generic, IsString)
 
 data TodoListResult = TodoListResult
   { todos   :: [TodoEntry]
@@ -87,10 +93,6 @@ instance FromJSON TodoEntry
 
 instance ToJSON TodoEntry
 
-instance FromJSON Flag
-
-instance ToJSON Flag
-
 instance FromJSON TodoListResult
 
 instance ToJSON TodoListResult
@@ -104,6 +106,28 @@ instance FromJSON EditTodoRequest
 instance ToJSON EditTodoRequest
 
 instance FromJSON ToodlesConfig
+
+instance ToJSON Flag where
+  toJSON TODO              = Data.Aeson.String "TODO"
+  toJSON FIXME             = Data.Aeson.String "FIXME"
+  toJSON XXX               = Data.Aeson.String "XXX"
+  toJSON (UF (UserFlag x)) = Data.Aeson.String x
+
+instance FromJSON Flag where
+  parseJSON (Data.Aeson.String x) =
+    case x of
+      "TODO"  -> pure TODO
+      "FIXME" -> pure FIXME
+      "XXX"   -> pure XXX
+      _       -> pure $ UF $ UserFlag x
+  parseJSON invalid               = typeMismatch "UserFlag" invalid
+
+instance ToJSON UserFlag where
+  toJSON (UserFlag x) = Data.Aeson.String x
+
+instance FromJSON UserFlag where
+  parseJSON (Data.Aeson.String x) = pure $ UserFlag x
+  parseJSON invalid               = typeMismatch "UserFlag" invalid
 
 type ToodlesAPI =
   "todos" :> QueryFlag "recompute" :> Get '[ JSON] TodoListResult :<|>
@@ -302,6 +326,7 @@ data ToodlesArgs = ToodlesArgs
   , limit_results   :: Int
   , port            :: Maybe Int
   , no_server       :: Bool
+  , userFlag        :: [UserFlag]
   } deriving (Show, Data, Typeable, Eq)
 
 argParser :: ToodlesArgs
@@ -312,6 +337,7 @@ argParser =
   , limit_results = def &= help "Limit number of search results"
   , port = def &= help "Run server on port"
   , no_server = def &= help "Output matching todos to the command line and exit"
+  , userFlag = def &= help "Additional flagword (e.g.: MAYBE)"
   } &=
   summary ("toodles " ++ showVersion version) &=
   program "toodles" &=
@@ -363,10 +389,20 @@ lexeme = L.lexeme space
 symbol :: T.Text -> Parser T.Text
 symbol = L.symbol space
 
-parseFlag :: Parser Flag
-parseFlag =   try (symbol "TODO"  *> pure TODO )
-          <|> try (symbol "FIXME" *> pure FIXME)
-          <|> (symbol "XXX"   *> pure XXX  )
+-- | parse "hard-coded" flags, and user-defined flags if any
+parseFlag :: [UserFlag] -> Parser Flag
+parseFlag us = foldr (\a b -> b <|> foo a) (try parseFlagHardcoded) us
+  where
+    foo :: UserFlag -> Parser Flag
+    foo (UserFlag x) = try (symbol x *> pure (UF $ UserFlag x))
+
+-- | parse flags TODO, FIXME, XXX
+parseFlagHardcoded :: Parser Flag
+parseFlagHardcoded =
+      try (symbol "TODO"  *> pure TODO )
+  <|> try (symbol "FIXME" *> pure FIXME)
+  <|>     (symbol "XXX"   *> pure XXX  )
+
 
 parseComment :: T.Text -> Parser TodoEntry
 parseComment extension
@@ -436,10 +472,10 @@ prefixParserForFileType extension =
        then orgMode
        else comment
 
-parseTodoEntryHead :: FilePath -> LineNumber -> Parser TodoEntry
-parseTodoEntryHead path lineNum = do
+parseTodoEntryHead :: [UserFlag] -> FilePath -> LineNumber -> Parser TodoEntry
+parseTodoEntryHead us path lineNum = do
   entryLeadingText <- manyTill anyChar (prefixParserForFileType $ getExtension path)
-  flag <- parseFlag
+  flag <- parseFlag us
   entryDetails <- optional $ try (inParens $ many (noneOf [')', '(']))
   let parsedDetails = parseDetails . T.pack <$> entryDetails
       entryPriority = (readMaybe . T.unpack) =<< (snd4 =<< parsedDetails)
@@ -461,9 +497,9 @@ parseTodoEntryHead path lineNum = do
       entryTags
       (T.pack entryLeadingText)
 
-parseTodo :: FilePath -> LineNumber -> Parser TodoEntry
-parseTodo path lineNum =
-  try (parseTodoEntryHead path lineNum) <|> parseComment (getExtension path)
+parseTodo :: [UserFlag] -> FilePath -> LineNumber -> Parser TodoEntry
+parseTodo us path lineNum =
+  try (parseTodoEntryHead us path lineNum) <|> parseComment (getExtension path)
 
 getAllFiles :: ToodlesConfig -> FilePath -> IO [SourceFile]
 getAllFiles config path =
@@ -500,11 +536,11 @@ isValidFile :: ToodlesConfig ->  FilePath -> Bool
 isValidFile config f =
   fileHasValidExtension f && not (ignoreFile config f)
 
-runTodoParser :: SourceFile -> [TodoEntry]
-runTodoParser (SourceFile path ls) =
+runTodoParser :: [UserFlag] -> SourceFile -> [TodoEntry]
+runTodoParser us (SourceFile path ls) =
   let parsedTodoLines =
         map
-          (\(lineNum, lineText) -> parseMaybe (parseTodo path lineNum) lineText)
+          (\(lineNum, lineText) -> parseMaybe (parseTodo us path lineNum) lineText)
           (zip [1 ..] ls)
       groupedTodos = foldl foldTodoHelper ([], False) parsedTodoLines
   in fst groupedTodos
@@ -555,7 +591,7 @@ runFullSearch userArgs =
         when (isLeft config)
           $ putStrLn $ "[WARNING] Invalid .toodles.yaml: " ++ show config
         allFiles <- getAllFiles (fromRight (ToodlesConfig []) config) projectRoot
-        let parsedTodos = concatMap runTodoParser allFiles
+        let parsedTodos = concatMap (runTodoParser $ userFlag userArgs) allFiles
             filteredTodos =
               filter (filterSearch (assignee_search userArgs)) parsedTodos
             resultList = limitSearch filteredTodos $ limit_results userArgs
@@ -606,10 +642,12 @@ main = do
   userArgs <- cmdArgs argParser >>= setAbsolutePath
   sResults <- runFullSearch userArgs
   case userArgs of
-    (ToodlesArgs _ _ _ _ True) -> mapM_ (putStrLn . prettyFormat) $ todos sResults
+    (ToodlesArgs _ _ _ _ True _) -> mapM_ (putStrLn . prettyFormat) $ todos sResults
     _ -> do
           let webPort = fromMaybe 9001 $ port userArgs
           ref <- newIORef sResults
           dataDir <- (++ "/web") <$> getDataDir
           putStrLn $ "serving on " ++ show webPort
           run webPort $ app $ ToodlesState ref dataDir
+
+-- TODO (damien|p=2) - add support for user flags in the configuration file
