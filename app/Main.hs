@@ -1,10 +1,11 @@
-{-# LANGUAGE DataKinds           #-}
-{-# LANGUAGE DeriveDataTypeable  #-}
-{-# LANGUAGE DeriveGeneric       #-}
-{-# LANGUAGE OverloadedStrings   #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE DeriveDataTypeable         #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE ScopedTypeVariables        #-}
 
-{-# LANGUAGE TypeOperators       #-}
+{-# LANGUAGE TypeOperators              #-}
 
 -- TODO (avi|p=3|#cleanup|key=val|k3y=asdf|key=1) - break this into modules
 module Main where
@@ -85,9 +86,10 @@ data EditTodoRequest = EditTodoRequest
   , setPriority :: Maybe Integer
   } deriving (Show, Generic)
 
-newtype ToodlesConfig = ToodlesConfig {
-  ignore :: [FilePath]
-                                   } deriving (Show, Generic)
+data ToodlesConfig = ToodlesConfig
+  { ignore :: [FilePath]
+  , flags  :: [UserFlag]
+  } deriving (Show, Generic)
 
 instance FromJSON TodoEntry
 
@@ -267,9 +269,10 @@ renderTodo t =
       commented = map (\l -> comment <> " " <> l) fullNoComments
 
       renderFlag :: Flag -> T.Text
-      renderFlag TODO  = "TODO"
-      renderFlag FIXME = "FIXME"
-      renderFlag XXX   = "XXX"
+      renderFlag TODO                = "TODO"
+      renderFlag FIXME               = "FIXME"
+      renderFlag XXX                 = "XXX"
+      renderFlag (UF (UserFlag x))   = x
   in mapHead (\l -> leadingText t <> l) $
         mapInit (\l -> foldl (<>) "" [" " | _ <- [1..(T.length $ leadingText t)]] <> l) commented
 
@@ -523,7 +526,7 @@ fileHasValidExtension path =
   any (\ext -> ext `T.isSuffixOf` T.pack path) (map fst fileTypeToComment)
 
 ignoreFile :: ToodlesConfig -> FilePath -> Bool
-ignoreFile (ToodlesConfig ignoredPaths) file =
+ignoreFile (ToodlesConfig ignoredPaths todo) file =
   let p = T.pack file
   in T.isInfixOf "node_modules" p || T.isSuffixOf "pb.go" p ||
      T.isSuffixOf "_pb2.py" p ||
@@ -587,11 +590,12 @@ runFullSearch userArgs =
         configExists <- doesFileExist $ projectRoot ++ "/.toodles.yaml"
         config <- if configExists
           then Y.decodeFileEither (projectRoot ++ "/.toodles.yaml")
-          else return . Right $ ToodlesConfig []
+          else return . Right $ ToodlesConfig [] []
         when (isLeft config)
           $ putStrLn $ "[WARNING] Invalid .toodles.yaml: " ++ show config
-        allFiles <- getAllFiles (fromRight (ToodlesConfig []) config) projectRoot
-        let parsedTodos = concatMap (runTodoParser $ userFlag userArgs) allFiles
+        let config' = fromRight (ToodlesConfig [] []) config
+        allFiles <- getAllFiles config' projectRoot
+        let parsedTodos = concatMap (runTodoParser $ userFlag userArgs ++ flags config') allFiles
             filteredTodos =
               filter (filterSearch (assignee_search userArgs)) parsedTodos
             resultList = limitSearch filteredTodos $ limit_results userArgs

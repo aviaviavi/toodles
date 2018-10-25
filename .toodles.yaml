@@ -4,3 +4,6 @@
 ignore:
 - test.js
 - stack-work
+
+flags:
+- MAYBE
