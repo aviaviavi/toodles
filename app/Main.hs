@@ -11,6 +11,7 @@ module Main where
 
 import qualified Control.Exception          as E
 import           Control.Monad
+import           Control.Monad              (forM)
 import           Control.Monad.IO.Class
 import           Data.Aeson
 import           Data.Either
@@ -151,25 +152,16 @@ updateTodoLinesInFile f todo = do
            fileLines)
   liftIO $ writeFile (sourceFile todo) $ unlines updatedLines
 
-removeAndAdjust :: [TodoEntry] -> IO [TodoEntry]
-removeAndAdjust deleteList =
-  if null deleteList
-    then return []
-    else let deleteItem = head deleteList
-             rest = tail deleteList
-         in do _ <- removeTodoFromCode deleteItem
-               return $
-                 map
-                   (\t ->
-                      if (sourceFile t == sourceFile deleteItem) &&
-                         (lineNumber t > lineNumber deleteItem)
-                        then t
-                             { lineNumber =
-                                 lineNumber t -
-                                 (fromIntegral . length $ body deleteItem)
-                             }
-                        else t)
-                   rest
+removeAndAdjust :: MonadIO io => [TodoEntry] -> io [TodoEntry]
+removeAndAdjust [] = return []
+removeAndAdjust (x:xs) = do
+  removeTodoFromCode x
+  forM xs $ \t ->
+    if (sourceFile t == sourceFile x) &&
+       (lineNumber t > lineNumber x)
+    then return $ t { lineNumber = lineNumber t - (fromIntegral . length $ body x)
+                    }
+    else return t
 
 deleteTodos :: ToodlesState -> DeleteTodoRequest -> Handler T.Text
 deleteTodos (ToodlesState ref _) req = do
