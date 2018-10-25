@@ -57,6 +57,7 @@ Currently via config you can:
 These languages will be scanned for any TODO's:
 
 - C/C++
+- C#
 - Elixir
 - Erlang
 - Go
