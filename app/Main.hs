@@ -13,7 +13,6 @@ import qualified Control.Exception          as E
 import           Control.Monad
 import           Control.Monad.IO.Class
 import           Data.Aeson
-import qualified Data.ByteString.Char8      as B8SS
 import           Data.Either
 import           Data.IORef
 import           Data.List
@@ -531,7 +530,7 @@ runFullSearch userArgs =
   in do
         configExists <- doesFileExist $ projectRoot ++ "/.toodles.yaml"
         config <- if configExists
-          then Y.decodeEither' . B8SS.pack <$> readFile (projectRoot ++ "/.toodles.yaml")
+          then Y.decodeFileEither (projectRoot ++ "/.toodles.yaml")
           else return . Right $ ToodlesConfig []
         when (isLeft config)
           $ putStrLn $ "[WARNING] Invalid .toodles.yaml: " ++ show config
