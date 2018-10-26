@@ -63,11 +63,17 @@ data TodoEntry
   deriving (Show, Generic)
 
 data Flag = TODO | FIXME | XXX | UF UserFlag
-          deriving (Show, Generic)
+          deriving (Generic)
 
 newtype UserFlag = UserFlag T.Text
                  deriving ( Show, Data, Eq
                           , Generic, IsString)
+
+instance Show Flag where
+  show TODO              = "TODO"
+  show FIXME             = "FIXME"
+  show XXX               = "XXX"
+  show (UF (UserFlag x)) = T.unpack x
 
 data TodoListResult = TodoListResult
   { todos   :: [TodoEntry]
