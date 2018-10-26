@@ -26,7 +26,10 @@ description:
     your TODO\'s with an easy to use web application. When you make changes via
     toodles, the edits will be applied directly the TODO entries in your code.
     When you\'re done, commit and push your changes to share them with your team!
- 
+
+ghc-options:
+  - -Wall
+  - -Wcompat
 
 dependencies:
 - base >= 4.0 && < 5
