@@ -33,6 +33,7 @@ before_install:
 
 install:
 # Build dependencies
+- stack --no-terminal --install-ghc install -j 1 aeson
 - stack --no-terminal --install-ghc test --only-dependencies
 
 script:
