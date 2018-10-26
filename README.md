@@ -68,6 +68,7 @@ These languages will be scanned for any TODO's:
 - Lua
 - Objective-C
 - PHP
+- Plaintext files (`*.txt`)
 - Protobuf
 - Python
 - Ruby

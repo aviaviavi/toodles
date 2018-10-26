@@ -322,6 +322,7 @@ fileTypeToComment =
   , (".sh", "#")
   , (".swift", "///")
   , (".ts", "//")
+  , (".txt", "")
   , (".yaml", "#")
   ]
 
