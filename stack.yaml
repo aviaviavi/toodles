@@ -18,7 +18,7 @@
 #
 # resolver: ./custom-snapshot.yaml
 # resolver: https://example.com/snapshots/2018-01-01.yaml
-resolver: lts-12.13
+resolver: lts-12.14
 pvp-bounds: both
 
 # User packages to be built.
