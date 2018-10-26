@@ -18,6 +18,7 @@ language: generic
 cache:
   directories:
   - $HOME/.stack
+  timeout: 300
 
 # Ensure necessary system libraries are present
 addons:
