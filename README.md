@@ -67,6 +67,7 @@ These languages will be scanned for any TODO's:
 - Kotlin
 - Lua
 - Objective-C
+- PHP
 - Protobuf
 - Python
 - Ruby
