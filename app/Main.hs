@@ -19,7 +19,6 @@ import           Data.Either
 import           Data.IORef
 import           Data.List
 import           Data.Maybe
-import           Data.Monoid
 import           Data.Proxy
 import           Data.String                (IsString)
 import           Data.String.Utils
@@ -198,6 +197,7 @@ removeAndAdjust deleteList =
     else let deleteItem = head deleteList
              rest = tail deleteList
          in do _ <- removeTodoFromCode deleteItem
+
                return $
                  map
                    (\t ->
@@ -471,6 +471,7 @@ thd4 (_, _, x, _) = x
 fth4 :: (a, b, c, d) -> d
 fth4 (_, _, _, x) = x
 
+prefixParserForFileType :: T.Text -> Parser T.Text
 prefixParserForFileType extension =
   let comment = symbol . getCommentForFileType $ extension
       orgMode =
@@ -484,7 +485,7 @@ prefixParserForFileType extension =
 parseTodoEntryHead :: [UserFlag] -> FilePath -> LineNumber -> Parser TodoEntry
 parseTodoEntryHead us path lineNum = do
   entryLeadingText <- manyTill anyChar (prefixParserForFileType $ getExtension path)
-  flag <- parseFlag us
+  f <- parseFlag us
   entryDetails <- optional $ try (inParens $ many (noneOf [')', '(']))
   let parsedDetails = parseDetails . T.pack <$> entryDetails
       entryPriority = (readMaybe . T.unpack) =<< (snd4 =<< parsedDetails)
@@ -501,7 +502,7 @@ parseTodoEntryHead us path lineNum = do
       path
       lineNum
       entryPriority
-      flag
+      f
       otherDetails
       entryTags
       (T.pack entryLeadingText)
@@ -532,7 +533,7 @@ fileHasValidExtension path =
   any (\ext -> ext `T.isSuffixOf` T.pack path) (map fst fileTypeToComment)
 
 ignoreFile :: ToodlesConfig -> FilePath -> Bool
-ignoreFile (ToodlesConfig ignoredPaths todo) file =
+ignoreFile (ToodlesConfig ignoredPaths _) file =
   let p = T.pack file
   in T.isInfixOf "node_modules" p || T.isSuffixOf "pb.go" p ||
      T.isSuffixOf "_pb2.py" p ||
@@ -635,7 +636,7 @@ addAnchors s =
   in BZ.preEscapedToHtml $
      (unlines $
       map
-        (\(i, l) -> printf "<pre><a name=\"line-%s\">%s</a></pre>" (show i) l)
+        (\(i :: Int, l) -> printf "<pre><a name=\"line-%s\">%s</a></pre>" (show i) l)
         codeLines)
 
 setAbsolutePath :: ToodlesArgs -> IO ToodlesArgs
