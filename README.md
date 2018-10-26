@@ -58,9 +58,11 @@ These languages will be scanned for any TODO's:
 
 - C/C++
 - C#
+- CSS
 - Elixir
 - Erlang
 - Go
+- HTML
 - Haskell
 - Java
 - Javascript
