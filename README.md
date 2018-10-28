@@ -14,7 +14,7 @@ When you're done, commit and push your changes to share them with your team!
 ### TODO details
 
 Specify details about your TODO's so that you can filter and sort them with
-ease! Specify details within parenthasis and separate with the `|` delimeter.
+ease! Specify details within parenthesis and separate with the `|` delimeter.
 
 ```python
 # TODO(assignee|p=1|keys=vals|#tags) 
