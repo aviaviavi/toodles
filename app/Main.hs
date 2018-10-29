@@ -332,6 +332,7 @@ fileTypeToComment =
   , (".ts", "//")
   , (".tsx", "//")
   , (".txt", "")
+  , (".vue", "//")
   , (".yaml", "#")
   ]
 
