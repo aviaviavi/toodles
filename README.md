@@ -77,6 +77,7 @@ These languages will be scanned for any TODO's:
 - Shell / Bash
 - Swift
 - Typescript
+- Vue (scripts only)
 - Yaml
 
 Submit a PR if you'd like a language to be added. There will eventually be
