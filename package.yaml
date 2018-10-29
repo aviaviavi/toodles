@@ -1,5 +1,5 @@
 name:                toodles
-version:             0.1.0.14
+version:             0.1.0.15
 github:              "aviaviavi/toodles"
 license:             MIT
 author:              "Avi Press"
@@ -38,6 +38,8 @@ executables:
     ghc-options:
     - -threaded
     - -rtsopts
+    - -O3
+    - -Wall
     - -with-rtsopts=-N
     dependencies:
     - MissingH >=1.4.0.1
@@ -45,8 +47,6 @@ executables:
     - blaze-html ==0.9.1.1
     - cmdargs ==0.10.20
     - directory ==1.3.1.5
-    - filepath ==1.4.2
-    - http-types ==0.12.2
     - megaparsec ==6.5.0
     - regex-posix ==0.95.2
     - servant ==0.14.1
@@ -54,7 +54,6 @@ executables:
     - servant-server ==0.14.1
     - strict ==0.3.2
     - text ==1.2.3.1
-    - transformers ==0.5.5.0
     - wai ==3.2.1.2
     - warp ==3.2.25
     - yaml ==0.8.32
