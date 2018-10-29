@@ -104,6 +104,19 @@ $ toodles -d /path/to/your/project -p 9001
 # or simply
 $ toodles
 ```
+#### Running with Docker
+
+For convenience this repository also provides a `Dockerfile` to automatically
+build toodles.
+
+```bash
+# to build container run:
+$ docker build -t toodles .
+# afterwards you can run the following command to execute toodles for the
+# directory you are currently in:
+$ docker run -it -v $(pwd):/repo -p 9001:9001 toodles
+
+```
 
 ### Current Limitations
 

@@ -17,3 +17,5 @@ RUN stack install
 EXPOSE 9001
 
 CMD ["toodles","-d","/repo/"]
+
+# TODO - use a multi stage build to reduce the final image size
