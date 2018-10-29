@@ -16,4 +16,4 @@ RUN stack install
 
 EXPOSE 9001
 
-CMD ["toodles -d /repo"]
+CMD ["toodles","-d","/repo/"]
