@@ -2,10 +2,10 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 411f3769742f74a6790eb2d0924bc592cb7eab1bd5f27649df14f726b8b37045
+-- hash: e98824dda65b5d290c9b4c3daf086cb4918385d87f176e675e83a222c6cb1957
 
 name:           toodles
-version:        0.1.0.14
+version:        0.1.0.15
 synopsis:       Manage the TODO entries in your code
 description:    Toodles scrapes your entire repository for TODO entries and organizes them so you can manage your project directly from the code. View, filter, sort, and edit your TODO\'s with an easy to use web application. When you make changes via toodles, the edits will be applied directly the TODO entries in your code. When you\'re done, commit and push your changes to share them with your team!
 category:       Project Management
@@ -38,10 +38,15 @@ source-repository head
 executable toodles
   main-is: Main.hs
   other-modules:
+      Config
+      Parse
+      Server
+      ToodlesApi
+      Types
       Paths_toodles
   hs-source-dirs:
       app
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -threaded -rtsopts -O3 -Wall -with-rtsopts=-N
   build-depends:
       MissingH >=1.4.0.1
     , aeson ==1.3.1.1
@@ -49,8 +54,6 @@ executable toodles
     , blaze-html ==0.9.1.1
     , cmdargs ==0.10.20
     , directory ==1.3.1.5
-    , filepath ==1.4.2
-    , http-types ==0.12.2
     , megaparsec ==6.5.0
     , regex-posix ==0.95.2
     , servant ==0.14.1
@@ -58,7 +61,6 @@ executable toodles
     , servant-server ==0.14.1
     , strict ==0.3.2
     , text ==1.2.3.1
-    , transformers ==0.5.5.0
     , wai ==3.2.1.2
     , warp ==3.2.25
     , yaml ==0.8.32
