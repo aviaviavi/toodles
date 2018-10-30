@@ -32,7 +32,7 @@ $(document).ready(function() {
             success: function(data) {
               this.todos = data.todos.map(t => {
                 return {
-                  id: t.id,
+                  id: t.entryId,
                   assignee: t.assignee,
                   body: t.body.join("\n"),
                   lineNumber: t.lineNumber,

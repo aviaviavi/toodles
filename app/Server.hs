@@ -1,45 +1,45 @@
-{-# LANGUAGE DeriveAnyClass,
-             DeriveGeneric,
-             DataKinds,
-             OverloadedStrings,
-             ScopedTypeVariables,
-             TypeOperators #-}
+{-# LANGUAGE DataKinds           #-}
+{-# LANGUAGE DeriveAnyClass      #-}
+{-# LANGUAGE DeriveGeneric       #-}
+{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators       #-}
 
 module Server where
 
-import Config
-import Parse
-import ToodlesApi
-import Types
+import           Config
+import           Parse
+import           ToodlesApi
+import           Types
 
-import qualified Control.Exception          as E
+import qualified Control.Exception      as E
 import           Control.Monad
 import           Control.Monad.IO.Class
-import           Data.Aeson                 (FromJSON)
+import           Data.Aeson             (FromJSON)
 import           Data.Either
 import           Data.IORef
-import           Data.List                  (find, nub)
+import           Data.List              (find, nub)
 import           Data.Maybe
 import           Data.String.Utils
-import           Data.Text                  (Text)
-import qualified Data.Text                  as T
-import qualified Data.Yaml                  as Y
-import           GHC.Generics               (Generic)
+import           Data.Text              (Text)
+import qualified Data.Text              as T
+import qualified Data.Yaml              as Y
+import           GHC.Generics           (Generic)
 import           Servant
 import           System.Console.CmdArgs
 import           System.Directory
 import           System.IO.HVFS
-import qualified System.IO.Strict           as SIO
+import qualified System.IO.Strict       as SIO
 import           System.Path
 import           System.Path.NameManip
-import           Text.Blaze.Html5 (Html)
-import qualified Text.Blaze.Html5           as BZ
+import           Text.Blaze.Html5       (Html)
+import qualified Text.Blaze.Html5       as BZ
 import           Text.Printf
 import           Text.Regex.Posix
 
 newtype ToodlesConfig = ToodlesConfig
   { ignore :: [FilePath]
-  } deriving (Show, Generic, FromJSON)  
+  } deriving (Show, Generic, FromJSON)
 
 app :: ToodlesState -> Application
 app s = serve toodlesAPI server
@@ -166,15 +166,14 @@ deleteTodos (ToodlesState ref _) req = do
     refVal@(TodoListResult r _) <- liftIO $ readIORef ref
     let toDelete = filter (\t -> entryId t `elem` ids req) r
     liftIO $ doUntilNull removeAndAdjust toDelete
-    let updeatedResults =
-            refVal
-            { todos =
-                filter (\t -> entryId t `notElem` map entryId toDelete) r
-            }
-    _ <- liftIO $ atomicModifyIORef' ref (const (updeatedResults, updeatedResults))
+    let remainingResults = filter (\t -> entryId t `notElem` map entryId toDelete) r
+    updatedResults <- return $ foldl (flip adjustLinesAfterDeletionOf) remainingResults toDelete
+    let remainingResultsRef = refVal { todos = updatedResults }
+    _ <- liftIO $ atomicModifyIORef' ref (const (remainingResultsRef, remainingResultsRef))
     return "{}"
 
     where
+
     doUntilNull :: ([a] -> IO [a]) -> [a] -> IO ()
     doUntilNull f xs = do
         result <- f xs
@@ -182,14 +181,20 @@ deleteTodos (ToodlesState ref _) req = do
             then return ()
             else doUntilNull f result
 
+    -- If we delete an entry, we need to decrement the line-numbers for the
+    -- other entries that come later in the file
+    adjustLinesAfterDeletionOf :: TodoEntry -> [TodoEntry] -> [TodoEntry]
+    adjustLinesAfterDeletionOf deleted =
+      map (\remaining ->
+          if (sourceFile remaining == sourceFile deleted) && (lineNumber remaining > lineNumber deleted)
+              then remaining { lineNumber = lineNumber remaining - (fromIntegral . length $ body deleted)}
+              else remaining)
+
     removeAndAdjust :: MonadIO m => [TodoEntry] -> m [TodoEntry]
     removeAndAdjust [] = return []
     removeAndAdjust (x:xs) = do
         removeTodoFromCode x
-        forM xs $ \t -> return $
-            if (sourceFile t == sourceFile x) && (lineNumber t > lineNumber x)
-                then t { lineNumber = lineNumber t - (fromIntegral . length $ body x)}
-                else t   
+        return $ adjustLinesAfterDeletionOf x xs
 
         where
         removeTodoFromCode :: MonadIO m => TodoEntry -> m ()
@@ -244,7 +249,6 @@ getAllFiles (ToodlesConfig ignoredPaths) basePath =
     (do putStrLn $ printf "Running toodles for path: %s" basePath
         files <- recurseDir SystemFS basePath
         let validFiles = filter isValidFile files
-        -- TODO(avi|p=3|#cleanup) - make sure it's a file first
         mapM
           (\f ->
              SourceFile f . (map T.pack . lines) <$>
@@ -256,10 +260,12 @@ getAllFiles (ToodlesConfig ignoredPaths) basePath =
        putStrLn ("Error reading " ++ basePath ++ ": " ++ show e) >> return [])
 
     where
+
     isValidFile :: FilePath -> Bool
     isValidFile path = fileHasValidExtension && not ignoreFile
 
         where
+
         fileHasValidExtension :: Bool
         fileHasValidExtension = any (\ext -> ext `T.isSuffixOf` T.pack path) (map fst fileTypeToComment)
 
