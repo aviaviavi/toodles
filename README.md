@@ -14,7 +14,7 @@ When you're done, commit and push your changes to share them with your team!
 ### TODO details
 
 Specify details about your TODO's so that you can filter and sort them with
-ease! Specify details within parenthasis and separate with the `|` delimeter.
+ease! Specify details within parenthesis and separate with the `|` delimeter.
 
 ```python
 # TODO(assignee|p=1|keys=vals|#tags) 
@@ -57,6 +57,7 @@ Currently via config you can:
 These languages will be scanned for any TODO's:
 
 - C/C++
+- C#
 - Elixir
 - Erlang
 - Go
@@ -64,7 +65,10 @@ These languages will be scanned for any TODO's:
 - Java
 - Javascript
 - Kotlin
+- Lua
 - Objective-C
+- PHP
+- Plaintext files (`*.txt`)
 - Protobuf
 - Python
 - Ruby
@@ -73,6 +77,7 @@ These languages will be scanned for any TODO's:
 - Shell / Bash
 - Swift
 - Typescript
+- Vue (scripts only)
 - Yaml
 
 Submit a PR if you'd like a language to be added. There will eventually be
@@ -99,6 +104,19 @@ project root and will start a server on port 9001. You can set these with the
 $ toodles -d /path/to/your/project -p 9001
 # or simply
 $ toodles
+```
+#### Running with Docker
+
+For convenience this repository also provides a `Dockerfile` to automatically
+build toodles.
+
+```bash
+# to build container run:
+$ docker build -t toodles .
+# afterwards you can run the following command to execute toodles for the
+# directory you are currently in:
+$ docker run -it -v $(pwd):/repo -p 9001:9001 toodles
+
 ```
 
 ### Current Limitations

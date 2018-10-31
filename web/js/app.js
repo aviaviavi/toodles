@@ -32,20 +32,20 @@ $(document).ready(function() {
             success: function(data) {
               this.todos = data.todos.map(t => {
                 return {
-                  id: t.id,
-                  assignee: t.assignee,
+                  id: t.entryId,
                   body: t.body.join("\n"),
-                  lineNumber: t.lineNumber,
+                  assignee: t.assignee,
                   sourceFile: t.sourceFile,
+                  lineNumber: t.lineNumber,
                   priority: t.priority,
                   flag: t.flag,
-                  tags: t.tags,
                   customAttributes: t.customAttributes.reduce((acc, curr) => {
                     console.log(acc, curr)
                     acc[curr[0]] = curr[1]
                     console.log(acc, curr)
                     return acc
                   }, {}),
+                  tags: t.tags,
                   selected: false
                 }
               })
@@ -237,4 +237,3 @@ $(document).ready(function() {
     }
   })
 })
-
