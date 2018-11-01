@@ -51,6 +51,7 @@ project. See this repo's `.toodles.yaml` for the full configuration spec.
 Currently via config you can:
 
 - Set files to ignore via a list of regular expressions
+- Specify your own flags to scan for other than the built-ins (TODO, FIXME, XXX)
 
 ### Scanned Languages
 

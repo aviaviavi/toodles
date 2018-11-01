@@ -130,7 +130,7 @@
                             <th>Tags</th>
                         </tr>
                     </thead>
-                    <tr class="todo-item" v-for="todo in todos" v-if="todo.body.indexOf(todoSearch) !== -1 || (todo.assignee || '').indexOf(todoSearch) !== -1 || (todo.tags || []).toString().indexOf(todoSearch) !== -1" @change="updateTodo('top level')">
+                    <tr class="todo-item" v-for="todo in todos" v-if="todo.body.indexOf(todoSearch) !== -1 || (todo.assignee || '').indexOf(todoSearch) !== -1 || (todo.tags || []).toString().indexOf(todoSearch) !== -1 || (todo.flag || '').indexOf(todoSearch) !== -1" @change="updateTodo('top level')">
                         <td><input type="checkbox" v-model="todo.selected"></td>
                         <td class="todo-item-priority" >
                             <div v-show="todo.priority !== undefined">{{ todo.priority }}</div>
