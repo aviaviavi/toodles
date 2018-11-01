@@ -19,6 +19,7 @@ import           Data.Aeson             (FromJSON)
 import           Data.Either
 import           Data.IORef
 import           Data.List              (find, nub)
+import qualified Data.Map               as M
 import           Data.Maybe
 import           Data.String.Utils
 import           Data.Text              (Text)
@@ -112,8 +113,8 @@ editTodos (ToodlesState ref _) req = do
 
 renderTodo :: TodoEntry -> [Text]
 renderTodo t =
-  let comment =
-        fromJust $ lookup ("." <> getExtension (sourceFile t)) fileTypeToComment
+  let Just comment =
+        M.lookup ("." <> getExtension (sourceFile t)) fileTypeToComment
       detail =
         renderFlag (flag t) <> " (" <>
         (T.pack $
@@ -274,7 +275,7 @@ getAllFiles (ToodlesConfig ignoredPaths _) basePath =
         where
 
         fileHasValidExtension :: Bool
-        fileHasValidExtension = any (\ext -> ext `T.isSuffixOf` T.pack path) (map fst fileTypeToComment)
+        fileHasValidExtension = any (\ext -> ext `T.isSuffixOf` T.pack path) (M.keys fileTypeToComment)
 
         ignoreFile :: Bool
         ignoreFile =

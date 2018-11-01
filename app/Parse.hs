@@ -6,6 +6,8 @@ module Parse where
 import           Types
 
 import           Data.List                  (find)
+import           Data.Map                   (Map)
+import qualified Data.Map                   as M
 import           Data.Maybe                 (fromJust, fromMaybe, isNothing)
 import           Data.Text                  (Text)
 import qualified Data.Text                  as T
@@ -28,7 +30,7 @@ parseComment extension = do
 
 getCommentForFileType :: Text -> Text
 getCommentForFileType extension =
-    fromMaybe unkownMarker $ lookup adjustedExtension fileTypeToComment
+    fromMaybe unkownMarker $ M.lookup adjustedExtension fileTypeToComment
     where
     adjustedExtension =
         if T.isPrefixOf "." extension
@@ -78,8 +80,8 @@ parseFlagHardcoded =
   <|>     (symbol "XXX"   *> pure XXX  )
 
 
-fileTypeToComment :: [(Text, Text)]
-fileTypeToComment =
+fileTypeToComment :: Map Text Text
+fileTypeToComment = M.fromList
   [ (".c", "//")
   , (".cc", "//")
   , (".clj", ";;")
