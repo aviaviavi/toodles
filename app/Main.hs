@@ -11,12 +11,11 @@ import           Data.IORef               (newIORef)
 import           Data.Maybe               (fromMaybe)
 import qualified Data.Text                as T (unpack)
 import           Network.Wai.Handler.Warp (run)
-import           System.Console.CmdArgs   (cmdArgs)
 import           Text.Printf              (printf)
 
 main :: IO ()
 main = do
-  userArgs <- cmdArgs argParser >>= setAbsolutePath
+  userArgs <- toodlesArgs >>= setAbsolutePath
   sResults <- runFullSearch userArgs
   case userArgs of
     (ToodlesArgs _ _ _ _ True _) -> mapM_ (putStrLn . prettyFormat) $ todos sResults

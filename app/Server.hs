@@ -26,7 +26,6 @@ import qualified Data.Text              as T
 import qualified Data.Yaml              as Y
 import           GHC.Generics           (Generic)
 import           Servant
-import           System.Console.CmdArgs
 import           System.Directory
 import           System.IO.HVFS
 import qualified System.IO.Strict       as SIO
@@ -208,19 +207,19 @@ deleteTodos (ToodlesState ref _) req = do
         removeTodoFromCode = updateTodoLinesInFile (const [])
 
 setAbsolutePath :: ToodlesArgs -> IO ToodlesArgs
-setAbsolutePath toodlesArgs = do
-    let pathOrDefault = if T.null . T.pack $ directory toodlesArgs
+setAbsolutePath args = do
+    let pathOrDefault = if T.null . T.pack $ directory args
                             then "."
-                            else directory toodlesArgs
+                            else directory args
     absolute <- normalise_path <$> absolute_path pathOrDefault
-    return $ toodlesArgs {directory = absolute}
+    return $ args {directory = absolute}
 
 getFullSearchResults :: ToodlesState -> Bool -> IO TodoListResult
 getFullSearchResults (ToodlesState ref _) recompute =
   if recompute
     then do
       putStrLn "refreshing todo's"
-      userArgs <- cmdArgs argParser >>= setAbsolutePath
+      userArgs <- toodlesArgs >>= setAbsolutePath
       sResults <- runFullSearch userArgs
       atomicModifyIORef' ref (const (sResults, sResults))
     else putStrLn "cached read" >> readIORef ref

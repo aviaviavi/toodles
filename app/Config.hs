@@ -4,7 +4,13 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators       #-}
 
-module Config where
+module Config
+  ( toodlesArgs
+  , ToodlesArgs(..)
+  , SearchFilter(..)
+  , AssigneeFilterRegex(..)
+  )
+  where
 
 import           Paths_toodles
 import           Types
@@ -12,6 +18,9 @@ import           Types
 import           Data.Text              (Text)
 import           Data.Version           (showVersion)
 import           System.Console.CmdArgs
+
+toodlesArgs :: IO ToodlesArgs
+toodlesArgs = cmdArgs argParser
 
 data ToodlesArgs = ToodlesArgs
   { directory       :: FilePath
