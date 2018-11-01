@@ -1,8 +1,10 @@
--- This file has been generated from package.yaml by hpack version 0.28.2.
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 1db0fe4af19503b62b329d05d28ee3b9d61e69b6919ca9205e5b0ece19e4faeb
+-- hash: 92631e6c0588971cddf6651815d7b3793d0d453f48c6d5100ce62b534ed0094a
 
 name:           toodles
 version:        0.1.0.16
@@ -16,20 +18,19 @@ maintainer:     mail@avi.press
 copyright:      2018 Avi Press
 license:        MIT
 build-type:     Simple
-cabal-version:  >= 1.10
 extra-source-files:
     README.md
 data-files:
+    web/js/app.js
+    web/js/jquery-3.3.1.min.js
+    web/js/vue.js
+    web/html/index.html
     web/css/bulma.min.css
     web/css/font-awesome.min.css
     web/css/toodles.css
     web/fonts/fontawesome-webfont.woff
     web/fonts/fontawesome-webfont.woff2
-    web/html/index.html
     web/img/favicon.png
-    web/js/app.js
-    web/js/jquery-3.3.1.min.js
-    web/js/vue.js
 
 source-repository head
   type: git
@@ -46,7 +47,7 @@ executable toodles
       Paths_toodles
   hs-source-dirs:
       app
-  ghc-options: -threaded -rtsopts -O3 -Wall -with-rtsopts=-N
+  ghc-options: -Wall -Wcompat -threaded -rtsopts -O3 -Wall -with-rtsopts=-N
   build-depends:
       MissingH >=1.4.0.1
     , aeson ==1.3.1.1

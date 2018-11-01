@@ -26,7 +26,6 @@ import qualified Data.Text              as T
 import qualified Data.Yaml              as Y
 import           GHC.Generics           (Generic)
 import           Servant
-import           System.Console.CmdArgs
 import           System.Directory
 import           System.IO.HVFS
 import qualified System.IO.Strict       as SIO
@@ -37,8 +36,9 @@ import qualified Text.Blaze.Html5       as BZ
 import           Text.Printf
 import           Text.Regex.Posix
 
-newtype ToodlesConfig = ToodlesConfig
+data ToodlesConfig = ToodlesConfig
   { ignore :: [FilePath]
+  , flags  :: [UserFlag]
   } deriving (Show, Generic, FromJSON)
 
 app :: ToodlesState -> Application
@@ -115,7 +115,7 @@ renderTodo t =
   let comment =
         fromJust $ lookup ("." <> getExtension (sourceFile t)) fileTypeToComment
       detail =
-        "TODO (" <>
+        renderFlag (flag t) <> " (" <>
         (T.pack $
          Data.String.Utils.join
            "|"
@@ -129,7 +129,7 @@ renderTodo t =
       mapHead (\l -> leadingText t <> l) $
         mapInit (\l -> foldl (<>) "" [" " | _ <- [1..(T.length $ leadingText t)]] <> l) commented
 
-    where
+  where
     mapHead :: (a -> a) -> [a] -> [a]
     mapHead f (x:xs) = f x : xs
     mapHead _ xs     = xs
@@ -141,6 +141,12 @@ renderTodo t =
     listIfNotNull :: Text -> [Text]
     listIfNotNull "" = []
     listIfNotNull s  = [s]
+
+    renderFlag :: Flag -> Text
+    renderFlag TODO                = "TODO"
+    renderFlag FIXME               = "FIXME"
+    renderFlag XXX                 = "XXX"
+    renderFlag (UF (UserFlag x))   = x
 
 -- | Given a function to emit new lines for a given todo, write that update in
 -- place of the current todo lines
@@ -201,19 +207,19 @@ deleteTodos (ToodlesState ref _) req = do
         removeTodoFromCode = updateTodoLinesInFile (const [])
 
 setAbsolutePath :: ToodlesArgs -> IO ToodlesArgs
-setAbsolutePath toodlesArgs = do
-    let pathOrDefault = if T.null . T.pack $ directory toodlesArgs
+setAbsolutePath args = do
+    let pathOrDefault = if T.null . T.pack $ directory args
                             then "."
-                            else directory toodlesArgs
+                            else directory args
     absolute <- normalise_path <$> absolute_path pathOrDefault
-    return $ toodlesArgs {directory = absolute}
+    return $ args {directory = absolute}
 
 getFullSearchResults :: ToodlesState -> Bool -> IO TodoListResult
 getFullSearchResults (ToodlesState ref _) recompute =
   if recompute
     then do
       putStrLn "refreshing todo's"
-      userArgs <- cmdArgs argParser >>= setAbsolutePath
+      userArgs <- toodlesArgs >>= setAbsolutePath
       sResults <- runFullSearch userArgs
       atomicModifyIORef' ref (const (sResults, sResults))
     else putStrLn "cached read" >> readIORef ref
@@ -224,11 +230,12 @@ runFullSearch userArgs = do
     configExists <- doesFileExist $ projectRoot ++ "/.toodles.yaml"
     config <- if configExists
         then Y.decodeFileEither (projectRoot ++ "/.toodles.yaml")
-        else return . Right $ ToodlesConfig []
+        else return . Right $ ToodlesConfig [] []
     when (isLeft config)
         $ putStrLn $ "[WARNING] Invalid .toodles.yaml: " ++ show config
-    allFiles <- getAllFiles (fromRight (ToodlesConfig []) config) projectRoot
-    let parsedTodos = concatMap runTodoParser allFiles
+    let config' = fromRight (ToodlesConfig [] []) config
+    allFiles <- getAllFiles config' projectRoot
+    let parsedTodos = concatMap (runTodoParser $ userFlag userArgs ++ flags config') allFiles
         filteredTodos = filter (filterSearch (assignee_search userArgs)) parsedTodos
         resultList = limitSearch filteredTodos $ limit_results userArgs
         indexedResults = map (\(i, r) -> r {entryId = i}) $ zip [1 ..] resultList
@@ -244,7 +251,7 @@ runFullSearch userArgs = do
     limitSearch todoList n = take n todoList
 
 getAllFiles :: ToodlesConfig -> FilePath -> IO [SourceFile]
-getAllFiles (ToodlesConfig ignoredPaths) basePath =
+getAllFiles (ToodlesConfig ignoredPaths _) basePath =
   E.catch
     (do putStrLn $ printf "Running toodles for path: %s" basePath
         files <- recurseDir SystemFS basePath

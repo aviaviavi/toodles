@@ -63,6 +63,21 @@ parseDetails toParse =
       entryTags = filter (T.isPrefixOf "#") dataTokens
   in (assigneeTo, priorityVal, filteredDetails, entryTags)
 
+-- | parse "hard-coded" flags, and user-defined flags if any
+parseFlag :: [UserFlag] -> Parser Flag
+parseFlag us = foldr (\a b -> b <|> foo a) (try parseFlagHardcoded) us
+  where
+    foo :: UserFlag -> Parser Flag
+    foo (UserFlag x) = try (symbol x *> pure (UF $ UserFlag x))
+
+-- | parse flags TODO, FIXME, XXX
+parseFlagHardcoded :: Parser Flag
+parseFlagHardcoded =
+      try (symbol "TODO"  *> pure TODO )
+  <|> try (symbol "FIXME" *> pure FIXME)
+  <|>     (symbol "XXX"   *> pure XXX  )
+
+
 fileTypeToComment :: [(Text, Text)]
 fileTypeToComment =
   [ (".c", "//")
@@ -102,16 +117,16 @@ fileTypeToComment =
   , (".yaml", "#")
   ]
 
-runTodoParser :: SourceFile -> [TodoEntry]
-runTodoParser (SourceFile path ls) =
+runTodoParser :: [UserFlag] -> SourceFile -> [TodoEntry]
+runTodoParser us (SourceFile path ls) =
   let parsedTodoLines =
         map
-          (\(lineNum, lineText) -> parseMaybe (parseTodo path lineNum) lineText)
+          (\(lineNum, lineText) -> parseMaybe (parseTodo us path lineNum) lineText)
           (zip [1 ..] ls)
       groupedTodos = foldl foldTodoHelper ([], False) parsedTodoLines
   in fst groupedTodos
 
-    where
+  where
     -- fold fn to concatenate todos that a multiple, single line comments
     foldTodoHelper :: ([TodoEntry], Bool) -> Maybe TodoEntry -> ([TodoEntry], Bool)
     foldTodoHelper (todoEntries, currentlyBuildingTodoLines) maybeTodo
@@ -124,7 +139,7 @@ runTodoParser (SourceFile path ls) =
             (init todoEntries ++ [combineTodo (last todoEntries) (fromJust maybeTodo)], True)
         | otherwise = (todoEntries, False)
 
-            where
+          where
             isEntryHead :: TodoEntry -> Bool
             isEntryHead TodoEntryHead {} = True
             isEntryHead _                = False
@@ -134,8 +149,8 @@ runTodoParser (SourceFile path ls) =
             isBodyLine _                = False
 
             combineTodo :: TodoEntry -> TodoEntry -> TodoEntry
-            combineTodo (TodoEntryHead i b a p n entryPriority attrs entryTags entryLeadingText) (TodoBodyLine l) =
-                TodoEntryHead i (b ++ [l]) a p n entryPriority  attrs entryTags entryLeadingText
+            combineTodo (TodoEntryHead i b a p n entryPriority f attrs entryTags entryLeadingText) (TodoBodyLine l) =
+                TodoEntryHead i (b ++ [l]) a p n entryPriority f attrs entryTags entryLeadingText
             combineTodo _ _ = error "Can't combine todoEntry of these types"
 
 getExtension :: FilePath -> Text
@@ -162,15 +177,14 @@ fth4 (_, _, _, x) = x
 unkownMarker :: Text
 unkownMarker = "UNKNOWN-DELIMETER-UNKNOWN-DELIMETER-UNKNOWN-DELIMETER"
 
-parseTodo :: FilePath -> LineNumber -> Parser TodoEntry
-parseTodo path lineNum = try parseTodoEntryHead
-                     <|> parseComment (getExtension path)
-
-    where
-    parseTodoEntryHead :: Parser TodoEntry
-    parseTodoEntryHead = do
+parseTodo :: [UserFlag] -> FilePath -> LineNumber -> Parser TodoEntry
+parseTodo us path lineNum = try (parseTodoEntryHead us)
+                            <|> parseComment (getExtension path)
+  where
+    parseTodoEntryHead :: [UserFlag] -> Parser TodoEntry
+    parseTodoEntryHead uf = do
         entryLeadingText <- manyTill anyChar (prefixParserForFileType $ getExtension path)
-        _ <- symbol "TODO"
+        f <- parseFlag uf
         entryDetails <- optional $ try (inParens $ many (noneOf [')', '(']))
         let parsedDetails = parseDetails . T.pack <$> entryDetails
             entryPriority = (readMaybe . T.unpack) =<< (snd4 =<< parsedDetails)
@@ -187,6 +201,7 @@ parseTodo path lineNum = try parseTodoEntryHead
             path
             lineNum
             entryPriority
+            f
             otherDetails
             entryTags
             (T.pack entryLeadingText)
