@@ -50,7 +50,8 @@ instance ToJSON TodoListResult
 
 newtype DeleteTodoRequest = DeleteTodoRequest
   { ids :: [Integer]
-  } deriving (Show, Generic, FromJSON)
+  } deriving (Show, Generic)
+instance FromJSON DeleteTodoRequest
 
 data EditTodoRequest = EditTodoRequest
   { editIds     :: [Integer]
