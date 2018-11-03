@@ -1,21 +1,12 @@
-FROM haskell:8.4
+FROM ubuntu
+
+ENV TOODLES_DATA_DIR /app
 
 VOLUME /repo
-WORKDIR /app
 
-RUN stack update
-
-COPY toodles.cabal /app
-COPY stack.yaml /app
-
-RUN stack install --only-dependencies
-
-COPY . /app
-
-RUN stack install
+COPY web /app
+copy toodles /app
 
 EXPOSE 9001
 
 CMD ["toodles","-d","/repo/"]
-
-# TODO - use a multi stage build to reduce the final image size
