@@ -1,6 +1,5 @@
-FROM haskell:8.4
+FROM haskell:8.4 as build-env
 
-VOLUME /repo
 WORKDIR /app
 
 RUN stack update
@@ -14,8 +13,14 @@ COPY . /app
 
 RUN stack install
 
+FROM haskell:8.4
+
+WORKDIR /app
+COPY --from=build-env /app .
+COPY --from=build-env /root/.local/bin/toodles /root/.local/bin/toodles
+
+VOLUME /repo
+
 EXPOSE 9001
 
 CMD ["toodles","-d","/repo/"]
-
-# TODO - use a multi stage build to reduce the final image size
