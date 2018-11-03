@@ -11,13 +11,13 @@ RUN stack install --only-dependencies
 
 COPY . /app
 
-RUN stack install
+RUN stack install --ghc-options '-optl-static'
 
-FROM haskell:8.4
+FROM alpine:latest
 
 WORKDIR /app
 COPY --from=build-env /app .
-COPY --from=build-env /root/.local/bin/toodles /root/.local/bin/toodles
+COPY --from=build-env /root/.local/bin/toodles /usr/local/bin/
 
 VOLUME /repo
 
