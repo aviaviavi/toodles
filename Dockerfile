@@ -1,6 +1,7 @@
-FROM haskell:8.4
+FROM haskell:8.4 as builder
 
 VOLUME /repo
+
 WORKDIR /app
 
 RUN stack update
@@ -14,8 +15,12 @@ COPY . /app
 
 RUN stack install
 
-EXPOSE 9001
-
-CMD ["toodles","-d","/repo/"]
-
 # TODO - use a multi stage build to reduce the final image size
+FROM debian:stretch
+WORKDIR /
+VOLUME /repo
+RUN apt-get update && apt-get install libgmp10
+COPY --from=builder /root/.local/bin/toodles .
+#COPY --from=builder /app/web /repo/
+CMD ["/toodles","-d","/repo/"]
+EXPOSE 9001
