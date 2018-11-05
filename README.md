@@ -63,6 +63,7 @@ These languages will be scanned for any TODO's:
 - Erlang
 - Go
 - Haskell
+- HTML
 - Java
 - Javascript
 - Kotlin
