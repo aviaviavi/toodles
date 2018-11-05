@@ -1,6 +1,5 @@
-FROM haskell:8.4
+FROM haskell:8.4 as build-env
 
-VOLUME /repo
 WORKDIR /app
 
 RUN stack update
@@ -12,10 +11,16 @@ RUN stack install --only-dependencies
 
 COPY . /app
 
-RUN stack install
+RUN stack install --ghc-options '-optl-static'
+
+FROM alpine:latest
+
+WORKDIR /app
+COPY --from=build-env /app .
+COPY --from=build-env /root/.local/bin/toodles /usr/local/bin/
+
+VOLUME /repo
 
 EXPOSE 9001
 
 CMD ["toodles","-d","/repo/"]
-
-# TODO - use a multi stage build to reduce the final image size
