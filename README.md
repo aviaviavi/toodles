@@ -108,11 +108,21 @@ $ toodles
 ```
 #### Running with Docker
 
+You can run a pre-built toodles for your current directory via docker:
+
+```bash
+# execute toodles for the directory you are currently in:
+$ docker run -it -v $(pwd):/repo -p 9001:9001 aviaviavi/toodles
+```
+
+Just mount your project into the container's `/repo` and direct a port of your choice to the container's `9001`.
+
 For convenience this repository also provides a `Dockerfile` to automatically
 build toodles.
 
 ```bash
 # to build container run:
+$ cd /path/to/toodles/repo
 $ docker build -t toodles .
 # afterwards you can run the following command to execute toodles for the
 # directory you are currently in:
@@ -134,4 +144,18 @@ initiated comment. For instance in javascript
 
 */
 ```
+
+### Contributing
+
+Contributions in any form are welcome! A few bits of info:
+
+- Don't be shy, ask questions! Contributing to Toodles should be welcoming for
+  people at any level of programming familiarity. Whether it's a new feature,
+  bug fix, or docs, any contribution is very appreciated.
+- Before you start coding, please comment or mark a particular issue as "in
+  progress", or even open your pull request as a work in progress (WIP). This is
+  to help avoid having multiple people work on the same thing.
+- If github issues don't cut it, feel free to reach out on twitter
+  [@avi_press](https://twitter.com/avi_press)
+
 
