@@ -17,7 +17,7 @@ Specify details about your TODO's so that you can filter and sort them with
 ease! Specify details within parenthesis and separate with the `|` delimeter.
 
 ```python
-# TODO(assignee|p=1|keys=vals|#tags) 
+# TODO(assignee|p=1|keys=vals|#tags)
 ```
 
 #### Priority
@@ -72,6 +72,7 @@ These languages will be scanned for any TODO's:
 - Plaintext files (`*.txt`)
 - Protobuf
 - Python
+- React Javascript (JSX)
 - Ruby
 - Rust
 - Scala
@@ -157,5 +158,3 @@ Contributions in any form are welcome! A few bits of info:
   to help avoid having multiple people work on the same thing.
 - If github issues don't cut it, feel free to reach out on twitter
   [@avi_press](https://twitter.com/avi_press)
-
-
