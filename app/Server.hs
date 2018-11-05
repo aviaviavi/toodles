@@ -3,6 +3,7 @@
 {-# LANGUAGE DeriveGeneric       #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+
 {-# LANGUAGE TypeOperators       #-}
 
 module Server where
@@ -16,6 +17,7 @@ import qualified Control.Exception      as E
 import           Control.Monad
 import           Control.Monad.IO.Class
 import           Data.Aeson             (FromJSON)
+import           Data.Aeson.Types
 import           Data.Either
 import           Data.IORef
 import           Data.List              (find, nub)
@@ -24,7 +26,6 @@ import           Data.String.Utils
 import           Data.Text              (Text)
 import qualified Data.Text              as T
 import qualified Data.Yaml              as Y
-import           GHC.Generics           (Generic)
 import           Servant
 import           System.Directory
 import           System.IO.HVFS
@@ -39,7 +40,14 @@ import           Text.Regex.Posix
 data ToodlesConfig = ToodlesConfig
   { ignore :: [FilePath]
   , flags  :: [UserFlag]
-  } deriving (Show, Generic, FromJSON)
+  } deriving (Show)
+
+instance FromJSON ToodlesConfig where
+  parseJSON (Object o) = do
+    parsedIgnore <- o .:? "ignore"  .!= []
+    parsedFlags <- o .:? "flags"  .!= []
+    return $ ToodlesConfig parsedIgnore parsedFlags
+  parseJSON invalid    = typeMismatch "Invalid config" invalid
 
 app :: ToodlesState -> Application
 app s = serve toodlesAPI server
@@ -143,10 +151,10 @@ renderTodo t =
     listIfNotNull s  = [s]
 
     renderFlag :: Flag -> Text
-    renderFlag TODO                = "TODO"
-    renderFlag FIXME               = "FIXME"
-    renderFlag XXX                 = "XXX"
-    renderFlag (UF (UserFlag x))   = x
+    renderFlag TODO              = "TODO"
+    renderFlag FIXME             = "FIXME"
+    renderFlag XXX               = "XXX"
+    renderFlag (UF (UserFlag x)) = x
 
 -- | Given a function to emit new lines for a given todo, write that update in
 -- place of the current todo lines
