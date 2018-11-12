@@ -167,6 +167,13 @@ $(document).ready(function() {
         this.hideDropdown()
       },
 
+      deselectAll: function() {
+        this.todos.map(function(t) {
+          t.selected = false
+        })
+        this.hideDropdown()
+      },
+
       toggleMenuBurger: function(ev) {
         $(".navbar-burger").toggleClass("is-active")
         $(".navbar-menu").toggleClass("is-active")

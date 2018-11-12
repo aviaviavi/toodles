@@ -37,7 +37,13 @@
                         </span>
                         <span>Delete</span>
                     </div>
-                    <div class="select-all navbar-item" v-on:click="selectAll">
+                    <div class="navbar-item deselect-all" v-on:click="deselectAll" v-show="todos.length && todos.every(t => t.selected)">
+                        <span class="icon">
+                           <i class="fa fa-square"></i> 
+                        </span>
+                        <span>Deselect All</span>
+                    </div>
+                    <div class="select-all navbar-item" v-on:click="selectAll" v-show="todos.some(t => !t.selected)">
                         <span class="icon">
                             <i class="fa fa-check-square"></i>
                         </span>
