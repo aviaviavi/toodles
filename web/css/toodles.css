@@ -53,6 +53,10 @@
     font-size: .75em;
 }
 
+.todo-source-link:hover {
+    font-weight: bold;    
+}
+
 .todo-source-link a:link, .todo-source-link a:visited {
     color: grey !important;
 }
@@ -75,6 +79,10 @@
     margin-right: .2em;
     padding: .3em;
     text-align: center;
+}
+
+.todo-item:hover {
+    cursor: pointer;
 }
 
 .todo-item-body {

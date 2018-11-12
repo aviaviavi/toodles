@@ -130,14 +130,14 @@
                             <th>Tags</th>
                         </tr>
                     </thead>
-                    <tr class="todo-item" v-for="todo in todos" v-if="todo.body.indexOf(todoSearch) !== -1 || (todo.assignee || '').indexOf(todoSearch) !== -1 || (todo.tags || []).toString().indexOf(todoSearch) !== -1 || (todo.flag || '').indexOf(todoSearch) !== -1" @change="updateTodo('top level')">
+                    <tr class="todo-item" v-for="todo in todos" v-if="todo.body.indexOf(todoSearch) !== -1 || (todo.assignee || '').indexOf(todoSearch) !== -1 || (todo.tags || []).toString().indexOf(todoSearch) !== -1 || (todo.flag || '').indexOf(todoSearch) !== -1" @change="updateTodo('top level')" @click="toggleTodo(todo)">
                         <td><input type="checkbox" v-model="todo.selected"></td>
                         <td class="todo-item-priority" >
                             <div v-show="todo.priority !== undefined">{{ todo.priority }}</div>
                         </td>
                         <td class="todo-item-flag" >{{ todo.flag }}</td>
                         <td class='todo-item-body'>
-                            <div class="todo-source-link"><a :href="'/source_file/' + todo.id + '#line-' + todo.lineNumber" target="_blank">{{ todo.sourceFile }}:{{ todo.lineNumber}}</a></div>
+                            <div class="todo-source-link" @click="stopPropagation"><a :href="'/source_file/' + todo.id + '#line-' + todo.lineNumber" target="_blank">{{ todo.sourceFile }}:{{ todo.lineNumber}}</a></div>
                             <div>{{ todo.body }}</div>
                         </td>
                         <td class="todo-item-assignee" >{{ todo.assignee }}</td>

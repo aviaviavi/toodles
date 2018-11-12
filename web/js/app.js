@@ -120,6 +120,14 @@ $(document).ready(function() {
           console.log(name)
         }
       },
+      
+      toggleTodo: function(todo) {
+        todo.selected = !todo.selected
+      },
+
+      stopPropagation: function(e) {
+        e.stopPropagation()
+      },
 
       editSeletedTodos: function() {
         $(".modal").addClass("is-active")
