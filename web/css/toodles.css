@@ -54,7 +54,7 @@
 }
 
 .todo-source-link:hover {
-    font-weight: bold;    
+    text-decoration: underline;
 }
 
 .todo-source-link a:link, .todo-source-link a:visited {
