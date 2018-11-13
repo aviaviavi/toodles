@@ -120,6 +120,14 @@ $(document).ready(function() {
           console.log(name)
         }
       },
+      
+      toggleTodo: function(todo) {
+        todo.selected = !todo.selected
+      },
+
+      stopPropagation: function(e) {
+        e.stopPropagation()
+      },
 
       editSeletedTodos: function() {
         $(".modal").addClass("is-active")
@@ -155,6 +163,13 @@ $(document).ready(function() {
       selectAll: function() {
         this.todos.map(function(t) {
           t.selected = true
+        })
+        this.hideDropdown()
+      },
+
+      deselectAll: function() {
+        this.todos.map(function(t) {
+          t.selected = false
         })
         this.hideDropdown()
       },

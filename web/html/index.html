@@ -37,7 +37,13 @@
                         </span>
                         <span>Delete</span>
                     </div>
-                    <div class="select-all navbar-item" v-on:click="selectAll">
+                    <div class="navbar-item deselect-all" v-on:click="deselectAll" v-show="todos.length && todos.every(t => t.selected)">
+                        <span class="icon">
+                           <i class="fa fa-square"></i> 
+                        </span>
+                        <span>Deselect All</span>
+                    </div>
+                    <div class="select-all navbar-item" v-on:click="selectAll" v-show="todos.some(t => !t.selected)">
                         <span class="icon">
                             <i class="fa fa-check-square"></i>
                         </span>
@@ -130,14 +136,14 @@
                             <th>Tags</th>
                         </tr>
                     </thead>
-                    <tr class="todo-item" v-for="todo in todos" v-if="todo.body.indexOf(todoSearch) !== -1 || (todo.assignee || '').indexOf(todoSearch) !== -1 || (todo.tags || []).toString().indexOf(todoSearch) !== -1 || (todo.flag || '').indexOf(todoSearch) !== -1" @change="updateTodo('top level')">
+                    <tr class="todo-item" v-for="todo in todos" v-if="todo.body.indexOf(todoSearch) !== -1 || (todo.assignee || '').indexOf(todoSearch) !== -1 || (todo.tags || []).toString().indexOf(todoSearch) !== -1 || (todo.flag || '').indexOf(todoSearch) !== -1" @change="updateTodo('top level')" @click="toggleTodo(todo)">
                         <td><input type="checkbox" v-model="todo.selected"></td>
                         <td class="todo-item-priority" >
                             <div v-show="todo.priority !== undefined">{{ todo.priority }}</div>
                         </td>
                         <td class="todo-item-flag" >{{ todo.flag }}</td>
                         <td class='todo-item-body'>
-                            <div class="todo-source-link"><a :href="'/source_file/' + todo.id + '#line-' + todo.lineNumber" target="_blank">{{ todo.sourceFile }}:{{ todo.lineNumber}}</a></div>
+                            <div class="todo-source-link" @click="stopPropagation"><a :href="'/source_file/' + todo.id + '#line-' + todo.lineNumber" target="_blank">{{ todo.sourceFile }}:{{ todo.lineNumber}}</a></div>
                             <div>{{ todo.body }}</div>
                         </td>
                         <td class="todo-item-assignee" >{{ todo.assignee }}</td>
