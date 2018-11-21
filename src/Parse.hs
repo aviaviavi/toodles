@@ -5,6 +5,7 @@ module Parse where
 
 import           Types
 
+
 import           Data.List                  (find)
 import           Data.Maybe                 (fromJust, fromMaybe, isJust,
                                              isNothing)
@@ -132,43 +133,50 @@ multiLineOpen :: FileTypeDetails -> Maybe Text
 multiLineOpen (FileTypeDetails _ _ (Just (MultineCommentEnclosing (a, _)))) = Just a
 multiLineOpen _ = Nothing
 
+enclosing = Just . MultineCommentEnclosing
+
+slashStar = (enclosing ("/*", "*/"))
+
 fileTypeToComment :: [FileTypeDetails]
 fileTypeToComment =
-  [ FileTypeDetails ".c" (Just "//") Nothing
-  , FileTypeDetails ".cc" (Just "//") Nothing
+  [ FileTypeDetails ".c" (Just "//") slashStar
+  , FileTypeDetails ".cc" (Just "//") slashStar
   , FileTypeDetails ".clj" (Just ";;") Nothing
-  , FileTypeDetails ".cpp" (Just "//") Nothing
-  , FileTypeDetails ".cxx" (Just "//") Nothing
-  , FileTypeDetails ".c++" (Just "//") Nothing
-  , FileTypeDetails ".cs" (Just "//") Nothing
+  , FileTypeDetails ".cpp" (Just "//") slashStar
+  , FileTypeDetails ".cxx" (Just "//") slashStar
+  , FileTypeDetails ".c++" (Just "//") slashStar
+  , FileTypeDetails ".cs" (Just "//") slashStar
+  , FileTypeDetails ".css" Nothing slashStar
   , FileTypeDetails ".ex" (Just "#") Nothing
   , FileTypeDetails ".erl" (Just "%") Nothing
-  , FileTypeDetails ".go" (Just "//") Nothing
-  , FileTypeDetails ".h" (Just "//") Nothing
-  , FileTypeDetails ".hh" (Just "//") Nothing
-  , FileTypeDetails ".hpp" (Just "//") Nothing
-  , FileTypeDetails ".hs" (Just "--") (Just (MultineCommentEnclosing ("{-", "-}")))
-  , FileTypeDetails ".hxx" (Just "//") Nothing
-  , FileTypeDetails ".h++" (Just "//") Nothing
-  , FileTypeDetails ".java" (Just "//") Nothing
-  , FileTypeDetails ".js" (Just "//") Nothing
-  , FileTypeDetails ".jsx" (Just "//") Nothing
-  , FileTypeDetails ".kt" (Just "//") Nothing
-  , FileTypeDetails ".kts" (Just "//") Nothing
-  , FileTypeDetails ".lua" (Just "--") Nothing
-  , FileTypeDetails ".m" (Just "//") Nothing
-  , FileTypeDetails ".php" (Just "//") Nothing
-  , FileTypeDetails ".proto" (Just "//") Nothing
-  , FileTypeDetails ".py" (Just "#") Nothing
-  , FileTypeDetails ".rb" (Just "#") Nothing
-  , FileTypeDetails ".rs" (Just "//") Nothing
-  , FileTypeDetails ".scala" (Just "//") Nothing
-  , FileTypeDetails ".sh" (Just "#") Nothing
-  , FileTypeDetails ".swift" (Just "///") Nothing
-  , FileTypeDetails ".ts" (Just "//") Nothing
-  , FileTypeDetails ".tsx" (Just "//") Nothing
+  , FileTypeDetails ".go" (Just "//") slashStar
+  , FileTypeDetails ".h" (Just "//") slashStar
+  , FileTypeDetails ".hh" (Just "//") slashStar
+  , FileTypeDetails ".hpp" (Just "//") slashStar
+  , FileTypeDetails ".hs" (Just "--") (enclosing ("{-", "-}"))
+  , FileTypeDetails ".html" Nothing (enclosing ("<!--", "-->"))
+  , FileTypeDetails ".hxx" (Just "//") slashStar
+  , FileTypeDetails ".h++" (Just "//") slashStar
+  , FileTypeDetails ".java" (Just "//") slashStar
+  , FileTypeDetails ".js" (Just "//") slashStar
+  , FileTypeDetails ".jsx" (Just "//") slashStar
+  , FileTypeDetails ".kt" (Just "//") slashStar
+  , FileTypeDetails ".kts" (Just "//") slashStar
+  , FileTypeDetails ".lua" (Just "--") (enclosing ("--[[", "]]"))
+  , FileTypeDetails ".m" (Just "//") slashStar
+  , FileTypeDetails ".php" (Just "//") slashStar
+  , FileTypeDetails ".proto" (Just "//") slashStar
+  , FileTypeDetails ".py" (Just "#") (enclosing ("\"\"\"", "\"\"\""))
+  , FileTypeDetails ".rb" (Just "#") (enclosing ("=begin", "=end"))
+  , FileTypeDetails ".rs" (Just "//") slashStar
+  , FileTypeDetails ".scss" Nothing slashStar
+  , FileTypeDetails ".scala" (Just "//") slashStar
+  , FileTypeDetails ".sh" (Just "#") slashStar
+  , FileTypeDetails ".swift" (Just "///") slashStar
+  , FileTypeDetails ".ts" (Just "//") slashStar
+  , FileTypeDetails ".tsx" (Just "//") slashStar
   , FileTypeDetails ".txt" (Just "") Nothing
-  , FileTypeDetails ".vue" (Just "//") Nothing
+  , FileTypeDetails ".vue" (Just "//") slashStar
   , FileTypeDetails ".yaml" (Just "#") Nothing
   ]
 

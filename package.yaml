@@ -1,5 +1,5 @@
 name:                toodles
-version:             0.1.4
+version:             1.0.0
 github:              "aviaviavi/toodles"
 license:             MIT
 author:              "Avi Press"
@@ -34,6 +34,8 @@ ghc-options:
 dependencies:
 - base >= 4.0 && < 5
 
+# TODO(avi) dependencies need to be relaxed and
+# fixed to include other ghc versions
 library:
   source-dirs: src
   exposed-modules:
