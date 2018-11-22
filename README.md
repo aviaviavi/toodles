@@ -59,10 +59,12 @@ These languages will be scanned for any TODO's:
 
 - C/C++
 - C#
+- CSS/SASS
 - Elixir
 - Erlang
 - Go
 - Haskell
+- HTML
 - Java
 - Javascript
 - Kotlin
@@ -129,21 +131,6 @@ $ docker build -t toodles .
 # directory you are currently in:
 $ docker run -it -v $(pwd):/repo -p 9001:9001 toodles
 
-```
-
-### Current Limitations
-
-Due to the parser's current simplicity, Toodles won't see TODO's in multiline
-initiated comment. For instance in javascript
-
-```javascript
-// TODO(#bug) this would be parsed
-
-/*
-
- TODO(#bug) this will _not_ be picked up by toodles
-
-*/
 ```
 
 ### Background

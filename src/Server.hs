@@ -1,6 +1,4 @@
 {-# LANGUAGE DataKinds           #-}
-{-# LANGUAGE DeriveAnyClass      #-}
-{-# LANGUAGE DeriveGeneric       #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -26,7 +24,6 @@ import           Data.String.Utils
 import           Data.Text              (Text)
 import qualified Data.Text              as T
 import qualified Data.Yaml              as Y
-import           Debug.Trace
 import           Servant
 import           System.Directory
 import           System.IO.HVFS
@@ -82,7 +79,7 @@ showRawFile (ToodlesState ref _) eId = do
     addAnchors :: String -> Html
     addAnchors s =
         let codeLines = zip [1::Int ..] $ lines s
-        in BZ.preEscapedToHtml $
+        in BZ.preEscapedToHtml
             (unlines $
             map
                 (\(i, l) -> printf "<pre><a name=\"line-%s\">%s</a></pre>" (show i) l)
@@ -90,31 +87,39 @@ showRawFile (ToodlesState ref _) eId = do
 
 editTodos :: ToodlesState -> EditTodoRequest -> Handler Text
 editTodos (ToodlesState ref _) req = do
-    (TodoListResult r _) <- liftIO $ readIORef ref
-    let editedList = map
-            (\t ->
-                if willEditTodo req t
-                then editTodo req t
-                else t)
-            r
-        editedFilteredList = filter (willEditTodo req) editedList
-    _ <- mapM_ recordUpdates editedFilteredList
-    return "{}"
-    where
+  (TodoListResult r _) <- liftIO $ readIORef ref
+  let editedList =
+        map
+          (\t ->
+             if willEditTodo req t
+               then editTodo req t
+               else t)
+          r
+      editedFilteredList = filter (willEditTodo req) editedList
+  _ <- mapM_ recordUpdates editedFilteredList
+  return "{}"
+  where
     willEditTodo :: EditTodoRequest -> TodoEntry -> Bool
     willEditTodo editRequest entry = entryId entry `elem` editIds editRequest
 
     editTodo :: EditTodoRequest -> TodoEntry -> TodoEntry
     editTodo editRequest entry =
-        let newAssignee = if isJust (setAssignee editRequest) && (not . T.null . fromJust $ setAssignee editRequest)
-            then setAssignee editRequest
-            else assignee entry
-            newPriority = if isJust (setPriority editRequest) then setPriority editRequest else priority entry in
-
-        entry {assignee = newAssignee,
-                tags = tags entry ++ addTags editRequest,
-                priority = newPriority,
-                customAttributes = nub $ customAttributes entry ++ addKeyVals editRequest}
+      let newAssignee =
+            if isJust (setAssignee editRequest) &&
+               (not . T.null . fromJust $ setAssignee editRequest)
+              then setAssignee editRequest
+              else assignee entry
+          newPriority =
+            if isJust (setPriority editRequest)
+              then setPriority editRequest
+              else priority entry
+      in entry
+         { assignee = newAssignee
+         , tags = tags entry ++ addTags editRequest
+         , priority = newPriority
+         , customAttributes =
+             nub $ customAttributes entry ++ addKeyVals editRequest
+         }
 
     recordUpdates :: MonadIO m => TodoEntry -> m ()
     recordUpdates t = void $ updateTodoLinesInFile renderTodo t
@@ -145,7 +150,7 @@ renderTodo t =
       commented = map commentFn fullNoComments
   in mapLast
        (\line ->
-          if (trace ("here!" ++ (show $ entryHeadClosed t)) entryHeadClosed t)
+          if (entryHeadClosed t)
             then line <> " " <> getMultiClosingForFileType ext
             else line) .
      mapHead (\l -> if (entryHeadOpened t) then (leadingText t <> getMultiOpeningForFileType ext <> " " <> l) else leadingText t <> l) .

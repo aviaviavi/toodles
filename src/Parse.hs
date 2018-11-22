@@ -6,18 +6,17 @@ module Parse where
 import           Types
 
 
+import           Data.Functor
 import           Data.List                  (find)
 import           Data.Maybe                 (fromJust, fromMaybe, isJust,
                                              isNothing)
 import           Data.Text                  (Text)
 import qualified Data.Text                  as T
 import           Data.Void                  (Void)
-
-
-import           Debug.Trace
 import           Text.Megaparsec
 import           Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
+import           Text.Printf
 import           Text.Read
 
 type Parser = Parsec Void Text
@@ -36,39 +35,32 @@ parseComment state fileExtension =
     else do
       single <- optional . try $ manyTill anyChar (symbol $ getCommentForFileType fileExtension)
       multi <-
-        if (isJust single)
+        if isJust single
         then return Nothing
-        else do
+        else
           optional . try $ manyTill anyChar (symbol $ getMultiOpeningForFileType fileExtension)
-      if (isJust single || isJust multi)
+      if isJust single || isJust multi
         then do
           b <- many anyChar
-          return $ TodoBodyLine (T.pack b) (isJust  multi) (getMultiClosingForFileType fileExtension `T.isInfixOf` (T.pack b))
+          return $ TodoBodyLine (T.pack b) (isJust  multi) (getMultiClosingForFileType fileExtension `T.isInfixOf` T.pack b)
         else
           fail "No open comment marker found"
 
--- TODO(avi|#pr) refactor the 3 fn's here
 getCommentForFileType :: Text -> Text
 getCommentForFileType fileExtension =
-    fromMaybe unkownMarker (singleCommentStart =<< (find (\a -> (extension a) == adjustedExtension) fileTypeToComment))
-    where
-    adjustedExtension =
-        if T.isPrefixOf "." fileExtension
-            then fileExtension
-            else "." <> fileExtension
+  getCommentForFileTypeWithDefault singleCommentStart fileExtension
 
 getMultiClosingForFileType :: Text -> Text
 getMultiClosingForFileType fileExtension =
-    fromMaybe unkownMarker (multiLineClose =<< (find (\a -> (extension a) == adjustedExtension) fileTypeToComment))
-    where
-    adjustedExtension =
-        if T.isPrefixOf "." fileExtension
-            then fileExtension
-            else "." <> fileExtension
+  getCommentForFileTypeWithDefault multiLineClose fileExtension
 
 getMultiOpeningForFileType :: Text -> Text
 getMultiOpeningForFileType fileExtension =
-    fromMaybe unkownMarker (multiLineOpen =<< (find (\a -> (extension a) == adjustedExtension) fileTypeToComment))
+  getCommentForFileTypeWithDefault multiLineOpen fileExtension
+
+getCommentForFileTypeWithDefault :: (FileTypeDetails -> Maybe Text) -> Text -> Text
+getCommentForFileTypeWithDefault getter fileExtension =
+    fromMaybe unkownMarker (getter =<< find (\a -> extension a == adjustedExtension) fileTypeToComment)
     where
     adjustedExtension =
         if T.isPrefixOf "." fileExtension
@@ -105,17 +97,17 @@ parseDetails toParse =
 
 -- | parse "hard-coded" flags, and user-defined flags if any
 parseFlag :: [UserFlag] -> Parser Flag
-parseFlag us = foldr (\a b -> b <|> foo a) (try parseFlagHardcoded) us
+parseFlag = foldr (\a b -> b <|> foo a) (try parseFlagHardcoded)
   where
     foo :: UserFlag -> Parser Flag
-    foo (UserFlag x) = try (symbol x *> pure (UF $ UserFlag x))
+    foo (UserFlag x) = try (symbol x $> (UF $ UserFlag x))
 
 -- | parse flags TODO, FIXME, XXX
 parseFlagHardcoded :: Parser Flag
 parseFlagHardcoded =
-      try (symbol "TODO"  *> pure TODO )
-  <|> try (symbol "FIXME" *> pure FIXME)
-  <|>     (symbol "XXX"   *> pure XXX  )
+      try (symbol "TODO"  $> TODO )
+  <|> try (symbol "FIXME" $> FIXME)
+  <|>     (symbol "XXX"   $> XXX  )
 
 newtype MultineCommentEnclosing = MultineCommentEnclosing (Text, Text)
 
@@ -133,9 +125,11 @@ multiLineOpen :: FileTypeDetails -> Maybe Text
 multiLineOpen (FileTypeDetails _ _ (Just (MultineCommentEnclosing (a, _)))) = Just a
 multiLineOpen _ = Nothing
 
+enclosing :: (Text, Text) -> Maybe MultineCommentEnclosing
 enclosing = Just . MultineCommentEnclosing
 
-slashStar = (enclosing ("/*", "*/"))
+slashStar :: Maybe MultineCommentEnclosing
+slashStar = enclosing ("/*", "*/")
 
 fileTypeToComment :: [FileTypeDetails]
 fileTypeToComment =
@@ -182,11 +176,11 @@ fileTypeToComment =
 
 singleLineCommentForExtension :: Text -> Maybe Text
 singleLineCommentForExtension fileExtension =
-  (find (\f -> extension f == fileExtension) fileTypeToComment) >>= singleCommentStart
+  find (\f -> extension f == fileExtension) fileTypeToComment >>= singleCommentStart
 
 multiLineOpenCommentForExtension :: Text -> Maybe Text
 multiLineOpenCommentForExtension fileExtension =
-  (find (\f -> extension f == fileExtension) fileTypeToComment) >>=
+  find (\f -> extension f == fileExtension) fileTypeToComment >>=
   multilineEnclosing >>=
   (\(MultineCommentEnclosing a) -> return $ fst a)
 
@@ -199,20 +193,18 @@ fileParseFoldFn ::
   -> (TodoParserState, [Maybe TodoEntry])
   -> (Integer, Text)
   -> (TodoParserState, [Maybe TodoEntry])
-fileParseFoldFn userFlags sourceFile (currentLineState, pastList) (lineNumber, line) =
-  let parsedLine = parseMaybe (parseTodo currentLineState userFlags sourceFile lineNumber) line
-      newState = (nextState currentLineState parsedLine) in
-  trace (show sourceFile ++ ":" ++ show lineNumber ++ "  " ++ (T.unpack line) ++ "  " ++ show parsedLine ++ " | " ++ show newState) (newState, pastList ++ [parsedLine])
+fileParseFoldFn userFlags file (currentLineState, pastList) (lineNum, line) =
+  let parsedLine = parseMaybe (parseTodo currentLineState userFlags file lineNum) line
+      newState = nextState currentLineState parsedLine in
+  (newState, pastList ++ [parsedLine])
 
--- FIXME(p=0) this seems broken
 nextState :: TodoParserState -> Maybe TodoEntry -> TodoParserState
 nextState _ Nothing                            = ParseStateUnknown
 nextState _ (Just (TodoBodyLine _ _ True))     = ParseStateUnknown
 nextState _ (Just (TodoBodyLine _ True False)) = ParseStateMultiLineComment
 nextState s (Just (TodoBodyLine _ False False)) = s
-nextState _ (Just (TodoBodyLine {})) = ParseStateSingleComment
 nextState _ (Just (TodoEntryHead _ _ _ _ _ _ _ _ _ _ _ True False)) = ParseStateMultiLineComment
-nextState _ (Just (TodoEntryHead _ _ _ _ _ _ _ _ _ _ MultiLine True False)) = ParseStateMultiLineComment
+nextState _ (Just (TodoEntryHead _ _ _ _ _ _ _ _ _ _ MultiLine _ False)) = ParseStateMultiLineComment
 nextState _ (Just TodoEntryHead {}) = ParseStateUnknown
 nextState a b = error ("No next state for " ++ show a ++ "   " ++ show b)
 
@@ -226,7 +218,7 @@ runTodoParser us (SourceFile path ls) =
           (ParseStateUnknown, [])
           (zip [1 ..] ls)
       groupedTodos = foldl foldTodoHelper ([], False) (snd parsedTodoLines)
-  in trace (path ++ " " ++ (show $ fst groupedTodos)) fst groupedTodos
+  in fst groupedTodos
 
   where
     -- fold fn to concatenate todos that a multiple, single line comments
@@ -254,7 +246,7 @@ runTodoParser us (SourceFile path ls) =
             combineTodo (TodoEntryHead i b a p n entryPriority f attrs entryTags entryLeadingText t isOpened _) (TodoBodyLine l _ isClosed) =
                 TodoEntryHead i (b ++ [l]) a p n entryPriority f attrs entryTags entryLeadingText t isOpened isClosed
             combineTodo  (TodoBodyLine l isOpened _) (TodoEntryHead i b a p n entryPriority f attrs entryTags entryLeadingText t _ isClosed) =
-                TodoEntryHead i ([l] ++ b) a p n entryPriority f attrs entryTags entryLeadingText t isOpened isClosed
+                TodoEntryHead i (l : b) a p n entryPriority f attrs entryTags entryLeadingText t isOpened isClosed
             combineTodo (TodoBodyLine l isOpened _) (TodoBodyLine r _ isClosed) =
               TodoBodyLineCombined (l : [r]) isOpened isClosed
             combineTodo (TodoBodyLineCombined l isOpened _) (TodoBodyLine r _ isClosed) =
@@ -295,12 +287,14 @@ data TodoParserState
 
 data LeadingTextKind = SingleLT | MultiLT | NonOpenedComment deriving (Eq, Show)
 
+takeShorter :: String -> String -> String
 takeShorter singleLeadingText multiLeadingText
   | length singleLeadingText == length multiLeadingText = ""
   | null singleLeadingText                              = multiLeadingText
   | null multiLeadingText                               = singleLeadingText
   | length singleLeadingText > length multiLeadingText  = multiLeadingText
   | length singleLeadingText < length multiLeadingText  = singleLeadingText
+  | otherwise  = ""
 
 parseTodo :: TodoParserState -> [UserFlag] -> FilePath -> LineNumber -> Parser TodoEntry
 parseTodo state us path lineNum = try (parseTodoEntryHead us)
@@ -327,15 +321,16 @@ parseTodo state us path lineNum = try (parseTodoEntryHead us)
                 (Just _, Nothing)  -> SingleLT
                 (Nothing, Just _)  -> MultiLT
                 (Nothing, Nothing) -> NonOpenedComment
+                err                -> error . printf "Error: unexpected value in leading text pattern match: %s. Please report this bug https://github.com/aviaviavi/toodles" $ show err
 
-  -- select the shorter leading text, and update leadingTextKind enum accordingly
-              leadingText = trace ("takeShorter: " ++ show entryLeadingTextSingle ++ " | " ++ show entryLeadingTextMulti) takeShorter ( (fromMaybe "" entryLeadingTextSingle)) ( (fromMaybe "" entryLeadingTextMulti))
+              -- select the shorter leading text, and update leadingTextKind enum accordingly
+              matchingLeadingText = takeShorter (fromMaybe "" entryLeadingTextSingle) (fromMaybe "" entryLeadingTextMulti)
 
-          parseEntryHead leadingTextKind leadingText
+          parseEntryHead leadingTextKind matchingLeadingText
 
           where
 
-          parseEntryHead leadingTextKind leadingText = do
+          parseEntryHead leadingTextCharsKind leadingTextChars = do
             f <- parseFlag uf
             entryDetails <- optional $ try (inParens $ many (noneOf [')', '(']))
             let parsedDetails = parseDetails . T.pack <$> entryDetails
@@ -358,9 +353,9 @@ parseTodo state us path lineNum = try (parseTodoEntryHead us)
                 f
                 otherDetails
                 entryTags
-                (T.pack leadingText)
-                (if leadingTextKind == SingleLT then SingleLine else MultiLine)
-                (leadingTextKind == MultiLT)
+                (T.pack leadingTextChars)
+                (if leadingTextCharsKind == SingleLT then SingleLine else MultiLine)
+                (leadingTextCharsKind == MultiLT)
                 (isJust lineWithClosing)
 
           inParens :: Parser a -> Parser a

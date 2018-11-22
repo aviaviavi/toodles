@@ -46,13 +46,13 @@ data TodoEntry
                   , entryHeadClosed  :: Bool
                   }
   | TodoBodyLine
-    Text -- ^ the body
-    Bool -- ^ has opening tag
-    Bool -- ^ has closing tag
+    Text -- the body
+    Bool -- has opening tag
+    Bool -- has closing tag
   | TodoBodyLineCombined
-    [Text] -- ^ the body
-    Bool -- ^ has opening tag
-    Bool -- ^ has closing tag
+    [Text] -- the body
+    Bool -- has opening tag
+    Bool -- has closing tag
   deriving (Show, Generic)
 instance ToJSON TodoEntry
 
