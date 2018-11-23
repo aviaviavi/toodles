@@ -27,7 +27,7 @@ main = do
           run webPort $ app $ ToodlesState ref dataDir
 
 prettyFormat :: TodoEntry -> String
-prettyFormat (TodoEntryHead _ l a p n entryPriority f _ _ _) =
+prettyFormat (TodoEntryHead _ l a p n entryPriority f _ _ _ _ _ _) =
   printf
     "Assignee: %s\n%s%s:%d\n%s - %s"
     (fromMaybe "None" a)
@@ -36,4 +36,4 @@ prettyFormat (TodoEntryHead _ l a p n entryPriority f _ _ _) =
     n
     (show f)
     (unlines $ map T.unpack l)
-prettyFormat (TodoBodyLine _) = error "Invalid type for prettyFormat"
+prettyFormat a = error "Invalid type for prettyFormat: " ++ show a
