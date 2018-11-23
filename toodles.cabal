@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d93f519ad4c4baf9563735f63c202d5e0dc4587304be7d1ab5c1f9206ff910cd
+-- hash: 137ba0001f3052a8a9a2db6b773032e6fe8d6d927b08ef48237c389b69ce514e
 
 name:           toodles
 version:        0.1.4
@@ -37,6 +37,39 @@ source-repository head
   type: git
   location: https://github.com/aviaviavi/toodles
 
+library
+  exposed-modules:
+      Parse
+      Types
+      Config
+      ToodlesApi
+      Server
+  other-modules:
+      Paths_toodles
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat
+  build-depends:
+      MissingH >=1.4.0.1
+    , aeson ==1.3.1.1
+    , base >=4.0 && <5
+    , blaze-html ==0.9.1.1
+    , cmdargs ==0.10.20
+    , directory ==1.3.1.5
+    , hspec >=2.4.4
+    , hspec-expectations >=0.8.2
+    , megaparsec ==6.5.0
+    , regex-posix ==0.95.2
+    , servant ==0.14.1
+    , servant-blaze ==0.8
+    , servant-server ==0.14.1
+    , strict ==0.3.2
+    , text ==1.2.3.1
+    , wai ==3.2.1.2
+    , warp ==3.2.25
+    , yaml ==0.8.32
+  default-language: Haskell2010
+
 executable toodles
   main-is: Main.hs
   other-modules:
@@ -48,6 +81,7 @@ executable toodles
       Paths_toodles
   hs-source-dirs:
       app
+      src
   ghc-options: -Wall -Wcompat -threaded -rtsopts -O3 -Wall -with-rtsopts=-N
   build-depends:
       MissingH >=1.4.0.1
@@ -56,6 +90,8 @@ executable toodles
     , blaze-html ==0.9.1.1
     , cmdargs ==0.10.20
     , directory ==1.3.1.5
+    , hspec >=2.4.4
+    , hspec-expectations >=0.8.2
     , megaparsec ==6.5.0
     , regex-posix ==0.95.2
     , servant ==0.14.1
@@ -63,6 +99,42 @@ executable toodles
     , servant-server ==0.14.1
     , strict ==0.3.2
     , text ==1.2.3.1
+    , wai ==3.2.1.2
+    , warp ==3.2.25
+    , yaml ==0.8.32
+  default-language: Haskell2010
+
+test-suite toodles-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Config
+      Parse
+      Server
+      ToodlesApi
+      Types
+      Paths_toodles
+  hs-source-dirs:
+      test
+      src
+  ghc-options: -Wall -Wcompat -threaded -rtsopts -with-rtsopts=-N -w
+  build-depends:
+      MissingH >=1.4.0.1
+    , aeson ==1.3.1.1
+    , base >=4.0 && <5
+    , blaze-html ==0.9.1.1
+    , cmdargs ==0.10.20
+    , directory ==1.3.1.5
+    , hspec >=2.4.4
+    , hspec-expectations >=0.8.2
+    , megaparsec ==6.5.0
+    , regex-posix ==0.95.2
+    , servant ==0.14.1
+    , servant-blaze ==0.8
+    , servant-server ==0.14.1
+    , strict ==0.3.2
+    , text ==1.2.3.1
+    , toodles
     , wai ==3.2.1.2
     , warp ==3.2.25
     , yaml ==0.8.32
