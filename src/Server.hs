@@ -26,6 +26,7 @@ import           Data.String.Utils
 import           Data.Text              (Text)
 import qualified Data.Text              as T
 import qualified Data.Yaml              as Y
+import           Debug.Trace
 import           Servant
 import           System.Directory
 import           System.IO.HVFS
@@ -120,32 +121,38 @@ editTodos (ToodlesState ref _) req = do
 
 renderTodo :: TodoEntry -> [Text]
 renderTodo t =
-  let comment =
-        fromJust $ lookup ("." <> getExtension (sourceFile t)) fileTypeToComment
+  let ext = "." <> getExtension (sourceFile t)
+      comment =
+        if commentType t == SingleLine
+          then fromJust $ singleLineCommentForExtension ext
+          else fromJust $ multiLineOpenCommentForExtension ext
       detail =
         renderFlag (flag t) <> " (" <>
         (T.pack $
          Data.String.Utils.join
            "|"
-           (map T.unpack $ [fromMaybe "" $ assignee t] ++
-            listIfNotNull (fmap (T.pack . maybe "" ((\n -> "p=" ++ n) . show)) priority t) ++
-            tags t ++
-            map (\a -> fst a <> "=" <> snd a) (customAttributes t))) <>
+           (map T.unpack $
+            [fromMaybe "" $ assignee t] ++
+            listIfNotNull
+              (fmap (T.pack . maybe "" ((\n -> "p=" ++ n) . show)) priority t) ++
+            tags t ++ map (\a -> fst a <> "=" <> snd a) (customAttributes t))) <>
         ") "
       fullNoComments = mapHead (\l -> detail <> "- " <> l) $ body t
-      commented = map (\l -> comment <> " " <> l) fullNoComments in
-      mapHead (\l -> leadingText t <> l) $
-        mapInit (\l -> foldl (<>) "" [" " | _ <- [1..(T.length $ leadingText t)]] <> l) commented
-
+      commentFn =
+        if commentType t == SingleLine
+          then (\l -> comment <> " " <> l)
+          else id
+      commented = map commentFn fullNoComments
+  in mapLast
+       (\line ->
+          if (trace ("here!" ++ (show $ entryHeadClosed t)) entryHeadClosed t)
+            then line <> " " <> getMultiClosingForFileType ext
+            else line) .
+     mapHead (\l -> if (entryHeadOpened t) then (leadingText t <> getMultiOpeningForFileType ext <> " " <> l) else leadingText t <> l) .
+     mapInit
+       (\l -> foldl (<>) "" [" " | _ <- [1 .. (T.length $ leadingText t)]] <> l) $
+       commented
   where
-    mapHead :: (a -> a) -> [a] -> [a]
-    mapHead f (x:xs) = f x : xs
-    mapHead _ xs     = xs
-
-    mapInit :: (a -> a) -> [a] -> [a]
-    mapInit f (x:xs) = [x] ++ map f xs
-    mapInit _ x      = x
-
     listIfNotNull :: Text -> [Text]
     listIfNotNull "" = []
     listIfNotNull s  = [s]
@@ -212,7 +219,11 @@ deleteTodos (ToodlesState ref _) req = do
 
         where
         removeTodoFromCode :: MonadIO m => TodoEntry -> m ()
-        removeTodoFromCode = updateTodoLinesInFile (const [])
+        removeTodoFromCode t =
+          let opening = if (entryHeadOpened t) then [getMultiOpeningForFileType $ getExtension (sourceFile t)] else []
+              closing = if (entryHeadClosed t) then [getMultiClosingForFileType $ getExtension (sourceFile t)] else []
+              finalList = if (length opening /= length closing) then (opening ++ closing) else [] in
+          updateTodoLinesInFile (const finalList) t
 
 setAbsolutePath :: ToodlesArgs -> IO ToodlesArgs
 setAbsolutePath args = do
@@ -282,7 +293,7 @@ getAllFiles (ToodlesConfig ignoredPaths _) basePath =
         where
 
         fileHasValidExtension :: Bool
-        fileHasValidExtension = any (\ext -> ext `T.isSuffixOf` T.pack path) (map fst fileTypeToComment)
+        fileHasValidExtension = any (\ext -> ext `T.isSuffixOf` T.pack path) (map extension fileTypeToComment)
 
         ignoreFile :: Bool
         ignoreFile =
@@ -290,3 +301,16 @@ getAllFiles (ToodlesConfig ignoredPaths _) basePath =
             in T.isInfixOf "node_modules" p || T.isSuffixOf "pb.go" p ||
                 T.isSuffixOf "_pb2.py" p ||
                 any (\r -> path =~ r :: Bool) ignoredPaths
+
+mapHead :: (a -> a) -> [a] -> [a]
+mapHead f (x:xs) = f x : xs
+mapHead _ xs     = xs
+
+mapInit :: (a -> a) -> [a] -> [a]
+mapInit f (x:xs) = [x] ++ map f xs
+mapInit _ x      = x
+
+mapLast :: (a -> a) -> [a] -> [a]
+mapLast f xs
+  | null xs = []
+  | otherwise = init xs ++ [f $ last xs]
