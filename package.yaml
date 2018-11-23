@@ -34,7 +34,7 @@ ghc-options:
 dependencies:
 - base >= 4.0 && < 5
 
-# TODO(avi) dependencies need to be relaxed and
+# TODO (avi|p=3|#dependencies) - dependencies need to be relaxed and
 # fixed to include other ghc versions
 library:
   source-dirs: src

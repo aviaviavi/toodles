@@ -133,7 +133,7 @@ renderTodo t =
           else fromJust $ multiLineOpenCommentForExtension ext
       detail =
         renderFlag (flag t) <> " (" <>
-        (T.pack $
+        T.pack (
          Data.String.Utils.join
            "|"
            (map T.unpack $
@@ -150,10 +150,10 @@ renderTodo t =
       commented = map commentFn fullNoComments
   in mapLast
        (\line ->
-          if (entryHeadClosed t)
+          if entryHeadClosed t
             then line <> " " <> getMultiClosingForFileType ext
             else line) .
-     mapHead (\l -> if (entryHeadOpened t) then (leadingText t <> getMultiOpeningForFileType ext <> " " <> l) else leadingText t <> l) .
+     mapHead (\l -> if entryHeadOpened t then leadingText t <> getMultiOpeningForFileType ext <> " " <> l else leadingText t <> l) .
      mapInit
        (\l -> foldl (<>) "" [" " | _ <- [1 .. (T.length $ leadingText t)]] <> l) $
        commented
@@ -177,10 +177,10 @@ updateTodoLinesInFile f todo = do
   fileLines <- liftIO $ lines <$> SIO.readFile (sourceFile todo)
   let updatedLines =
         slice 0 (fromIntegral $ startIndex - 1) fileLines ++ newLines ++
-        (slice
+        slice
            (fromIntegral startIndex + length (body todo))
            (length fileLines - 1)
-           fileLines)
+           fileLines
   liftIO $ writeFile (sourceFile todo) $ unlines updatedLines
 
     where
@@ -193,7 +193,7 @@ deleteTodos (ToodlesState ref _) req = do
     let toDelete = filter (\t -> entryId t `elem` ids req) r
     liftIO $ doUntilNull removeAndAdjust toDelete
     let remainingResults = filter (\t -> entryId t `notElem` map entryId toDelete) r
-    updatedResults <- return $ foldl (flip adjustLinesAfterDeletionOf) remainingResults toDelete
+    let updatedResults = foldl (flip adjustLinesAfterDeletionOf) remainingResults toDelete
     let remainingResultsRef = refVal { todos = updatedResults }
     _ <- liftIO $ atomicModifyIORef' ref (const (remainingResultsRef, remainingResultsRef))
     return "{}"
@@ -225,9 +225,9 @@ deleteTodos (ToodlesState ref _) req = do
         where
         removeTodoFromCode :: MonadIO m => TodoEntry -> m ()
         removeTodoFromCode t =
-          let opening = if (entryHeadOpened t) then [getMultiOpeningForFileType $ getExtension (sourceFile t)] else []
-              closing = if (entryHeadClosed t) then [getMultiClosingForFileType $ getExtension (sourceFile t)] else []
-              finalList = if (length opening /= length closing) then (opening ++ closing) else [] in
+          let opening = [getMultiOpeningForFileType $ getExtension (sourceFile t) | entryHeadOpened t]
+              closing = [getMultiClosingForFileType $ getExtension (sourceFile t) | entryHeadClosed t]
+              finalList = if length opening /= length closing then opening ++ closing else [] in
           updateTodoLinesInFile (const finalList) t
 
 setAbsolutePath :: ToodlesArgs -> IO ToodlesArgs
@@ -312,7 +312,7 @@ mapHead f (x:xs) = f x : xs
 mapHead _ xs     = xs
 
 mapInit :: (a -> a) -> [a] -> [a]
-mapInit f (x:xs) = [x] ++ map f xs
+mapInit f (x:xs) = x : map f xs
 mapInit _ x      = x
 
 mapLast :: (a -> a) -> [a] -> [a]
