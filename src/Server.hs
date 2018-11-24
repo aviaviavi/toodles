@@ -1,6 +1,4 @@
 {-# LANGUAGE DataKinds           #-}
-{-# LANGUAGE DeriveAnyClass      #-}
-{-# LANGUAGE DeriveGeneric       #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -81,7 +79,7 @@ showRawFile (ToodlesState ref _) eId = do
     addAnchors :: String -> Html
     addAnchors s =
         let codeLines = zip [1::Int ..] $ lines s
-        in BZ.preEscapedToHtml $
+        in BZ.preEscapedToHtml
             (unlines $
             map
                 (\(i, l) -> printf "<pre><a name=\"line-%s\">%s</a></pre>" (show i) l)
@@ -89,63 +87,77 @@ showRawFile (ToodlesState ref _) eId = do
 
 editTodos :: ToodlesState -> EditTodoRequest -> Handler Text
 editTodos (ToodlesState ref _) req = do
-    (TodoListResult r _) <- liftIO $ readIORef ref
-    let editedList = map
-            (\t ->
-                if willEditTodo req t
-                then editTodo req t
-                else t)
-            r
-        editedFilteredList = filter (willEditTodo req) editedList
-    _ <- mapM_ recordUpdates editedFilteredList
-    return "{}"
-    where
+  (TodoListResult r _) <- liftIO $ readIORef ref
+  let editedList =
+        map
+          (\t ->
+             if willEditTodo req t
+               then editTodo req t
+               else t)
+          r
+      editedFilteredList = filter (willEditTodo req) editedList
+  _ <- mapM_ recordUpdates editedFilteredList
+  return "{}"
+  where
     willEditTodo :: EditTodoRequest -> TodoEntry -> Bool
     willEditTodo editRequest entry = entryId entry `elem` editIds editRequest
 
     editTodo :: EditTodoRequest -> TodoEntry -> TodoEntry
     editTodo editRequest entry =
-        let newAssignee = if isJust (setAssignee editRequest) && (not . T.null . fromJust $ setAssignee editRequest)
-            then setAssignee editRequest
-            else assignee entry
-            newPriority = if isJust (setPriority editRequest) then setPriority editRequest else priority entry in
-
-        entry {assignee = newAssignee,
-                tags = tags entry ++ addTags editRequest,
-                priority = newPriority,
-                customAttributes = nub $ customAttributes entry ++ addKeyVals editRequest}
+      let newAssignee =
+            if isJust (setAssignee editRequest) &&
+               (not . T.null . fromJust $ setAssignee editRequest)
+              then setAssignee editRequest
+              else assignee entry
+          newPriority =
+            if isJust (setPriority editRequest)
+              then setPriority editRequest
+              else priority entry
+      in entry
+         { assignee = newAssignee
+         , tags = tags entry ++ addTags editRequest
+         , priority = newPriority
+         , customAttributes =
+             nub $ customAttributes entry ++ addKeyVals editRequest
+         }
 
     recordUpdates :: MonadIO m => TodoEntry -> m ()
     recordUpdates t = void $ updateTodoLinesInFile renderTodo t
 
 renderTodo :: TodoEntry -> [Text]
 renderTodo t =
-  let comment =
-        fromJust $ lookup ("." <> getExtension (sourceFile t)) fileTypeToComment
+  let ext = "." <> getExtension (sourceFile t)
+      comment =
+        if commentType t == SingleLine
+          then fromJust $ singleLineCommentForExtension ext
+          else fromJust $ multiLineOpenCommentForExtension ext
       detail =
         renderFlag (flag t) <> " (" <>
-        (T.pack $
+        T.pack (
          Data.String.Utils.join
            "|"
-           (map T.unpack $ [fromMaybe "" $ assignee t] ++
-            listIfNotNull (fmap (T.pack . maybe "" ((\n -> "p=" ++ n) . show)) priority t) ++
-            tags t ++
-            map (\a -> fst a <> "=" <> snd a) (customAttributes t))) <>
+           (map T.unpack $
+            [fromMaybe "" $ assignee t] ++
+            listIfNotNull
+              (fmap (T.pack . maybe "" ((\n -> "p=" ++ n) . show)) priority t) ++
+            tags t ++ map (\a -> fst a <> "=" <> snd a) (customAttributes t))) <>
         ") "
       fullNoComments = mapHead (\l -> detail <> "- " <> l) $ body t
-      commented = map (\l -> comment <> " " <> l) fullNoComments in
-      mapHead (\l -> leadingText t <> l) $
-        mapInit (\l -> foldl (<>) "" [" " | _ <- [1..(T.length $ leadingText t)]] <> l) commented
-
+      commentFn =
+        if commentType t == SingleLine
+          then (\l -> comment <> " " <> l)
+          else id
+      commented = map commentFn fullNoComments
+  in mapLast
+       (\line ->
+          if entryHeadClosed t
+            then line <> " " <> getMultiClosingForFileType ext
+            else line) .
+     mapHead (\l -> if entryHeadOpened t then leadingText t <> getMultiOpeningForFileType ext <> " " <> l else leadingText t <> l) .
+     mapInit
+       (\l -> foldl (<>) "" [" " | _ <- [1 .. (T.length $ leadingText t)]] <> l) $
+       commented
   where
-    mapHead :: (a -> a) -> [a] -> [a]
-    mapHead f (x:xs) = f x : xs
-    mapHead _ xs     = xs
-
-    mapInit :: (a -> a) -> [a] -> [a]
-    mapInit f (x:xs) = [x] ++ map f xs
-    mapInit _ x      = x
-
     listIfNotNull :: Text -> [Text]
     listIfNotNull "" = []
     listIfNotNull s  = [s]
@@ -165,10 +177,10 @@ updateTodoLinesInFile f todo = do
   fileLines <- liftIO $ lines <$> SIO.readFile (sourceFile todo)
   let updatedLines =
         slice 0 (fromIntegral $ startIndex - 1) fileLines ++ newLines ++
-        (slice
+        slice
            (fromIntegral startIndex + length (body todo))
            (length fileLines - 1)
-           fileLines)
+           fileLines
   liftIO $ writeFile (sourceFile todo) $ unlines updatedLines
 
     where
@@ -181,7 +193,7 @@ deleteTodos (ToodlesState ref _) req = do
     let toDelete = filter (\t -> entryId t `elem` ids req) r
     liftIO $ doUntilNull removeAndAdjust toDelete
     let remainingResults = filter (\t -> entryId t `notElem` map entryId toDelete) r
-    updatedResults <- return $ foldl (flip adjustLinesAfterDeletionOf) remainingResults toDelete
+    let updatedResults = foldl (flip adjustLinesAfterDeletionOf) remainingResults toDelete
     let remainingResultsRef = refVal { todos = updatedResults }
     _ <- liftIO $ atomicModifyIORef' ref (const (remainingResultsRef, remainingResultsRef))
     return "{}"
@@ -212,7 +224,11 @@ deleteTodos (ToodlesState ref _) req = do
 
         where
         removeTodoFromCode :: MonadIO m => TodoEntry -> m ()
-        removeTodoFromCode = updateTodoLinesInFile (const [])
+        removeTodoFromCode t =
+          let opening = [getMultiOpeningForFileType $ getExtension (sourceFile t) | entryHeadOpened t]
+              closing = [getMultiClosingForFileType $ getExtension (sourceFile t) | entryHeadClosed t]
+              finalList = if length opening /= length closing then opening ++ closing else [] in
+          updateTodoLinesInFile (const finalList) t
 
 setAbsolutePath :: ToodlesArgs -> IO ToodlesArgs
 setAbsolutePath args = do
@@ -282,7 +298,7 @@ getAllFiles (ToodlesConfig ignoredPaths _) basePath =
         where
 
         fileHasValidExtension :: Bool
-        fileHasValidExtension = any (\ext -> ext `T.isSuffixOf` T.pack path) (map fst fileTypeToComment)
+        fileHasValidExtension = any (\ext -> ext `T.isSuffixOf` T.pack path) (map extension fileTypeToComment)
 
         ignoreFile :: Bool
         ignoreFile =
@@ -290,3 +306,16 @@ getAllFiles (ToodlesConfig ignoredPaths _) basePath =
             in T.isInfixOf "node_modules" p || T.isSuffixOf "pb.go" p ||
                 T.isSuffixOf "_pb2.py" p ||
                 any (\r -> path =~ r :: Bool) ignoredPaths
+
+mapHead :: (a -> a) -> [a] -> [a]
+mapHead f (x:xs) = f x : xs
+mapHead _ xs     = xs
+
+mapInit :: (a -> a) -> [a] -> [a]
+mapInit f (x:xs) = x : map f xs
+mapInit _ x      = x
+
+mapLast :: (a -> a) -> [a] -> [a]
+mapLast f xs
+  | null xs = []
+  | otherwise = init xs ++ [f $ last xs]

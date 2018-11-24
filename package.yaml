@@ -1,5 +1,5 @@
 name:                toodles
-version:             0.1.4
+version:             1.0.0
 github:              "aviaviavi/toodles"
 license:             MIT
 author:              "Avi Press"
@@ -34,10 +34,41 @@ ghc-options:
 dependencies:
 - base >= 4.0 && < 5
 
+# TODO (avi|p=3|#dependencies) - dependencies need to be relaxed and
+# fixed to include other ghc versions
+library:
+  source-dirs: src
+  exposed-modules:
+  - Parse
+  - Types
+  - Config
+  - ToodlesApi
+  - Server
+  dependencies:
+  - hspec >= 2.4.4
+  - hspec-expectations >=0.8.2
+  - MissingH >=1.4.0.1
+  - aeson ==1.3.1.1
+  - blaze-html ==0.9.1.1
+  - cmdargs ==0.10.20
+  - directory ==1.3.1.5
+  - megaparsec ==6.5.0
+  - regex-posix ==0.95.2
+  - servant ==0.14.1
+  - servant-blaze ==0.8
+  - servant-server ==0.14.1
+  - strict ==0.3.2
+  - text ==1.2.3.1
+  - wai ==3.2.1.2
+  - warp ==3.2.25
+  - yaml ==0.8.32
+
 executables:
   toodles:
     main:                Main.hs
-    source-dirs:         app
+    source-dirs:
+    - app
+    - src
     ghc-options:
     - -threaded
     - -rtsopts
@@ -45,6 +76,39 @@ executables:
     - -Wall
     - -with-rtsopts=-N
     dependencies:
+    - hspec >= 2.4.4
+    - hspec-expectations >=0.8.2
+    - MissingH >=1.4.0.1
+    - aeson ==1.3.1.1
+    - blaze-html ==0.9.1.1
+    - cmdargs ==0.10.20
+    - directory ==1.3.1.5
+    - megaparsec ==6.5.0
+    - regex-posix ==0.95.2
+    - servant ==0.14.1
+    - servant-blaze ==0.8
+    - servant-server ==0.14.1
+    - strict ==0.3.2
+    - text ==1.2.3.1
+    - wai ==3.2.1.2
+    - warp ==3.2.25
+    - yaml ==0.8.32
+
+tests:
+  toodles-test:
+    main:                Spec.hs
+    source-dirs:
+    - test
+    - src
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -w
+    dependencies:
+    - toodles
+    - hspec >= 2.4.4
+    - hspec-expectations >=0.8.2
     - MissingH >=1.4.0.1
     - aeson ==1.3.1.1
     - blaze-html ==0.9.1.1

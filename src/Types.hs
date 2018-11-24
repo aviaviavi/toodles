@@ -27,6 +27,9 @@ data ToodlesState = ToodlesState
     dataPath :: FilePath
   }
 
+data CommentType = SingleLine | MultiLine deriving (Show, Eq, Generic)
+instance ToJSON CommentType
+
 data TodoEntry
   = TodoEntryHead { entryId          :: Integer
                   , body             :: [Text]
@@ -37,8 +40,19 @@ data TodoEntry
                   , flag             :: Flag
                   , customAttributes :: [(Text, Text)]
                   , tags             :: [Text]
-                  , leadingText      :: Text }
-  | TodoBodyLine Text
+                  , leadingText      :: Text
+                  , commentType      :: CommentType
+                  , entryHeadOpened  :: Bool
+                  , entryHeadClosed  :: Bool
+                  }
+  | TodoBodyLine
+    Text -- the body
+    Bool -- has opening tag
+    Bool -- has closing tag
+  | TodoBodyLineCombined
+    [Text] -- the body
+    Bool -- has opening tag
+    Bool -- has closing tag
   deriving (Show, Generic)
 instance ToJSON TodoEntry
 
