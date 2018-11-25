@@ -1,26 +1,36 @@
 FROM haskell:8.4 as build-env
 
-WORKDIR /app
+WORKDIR /toodles-app
 
 RUN stack update
 
-COPY toodles.cabal /app
-COPY stack.yaml /app
+COPY package.yaml /toodles-app/
+COPY stack.yaml /toodles-app/
+COPY app/ /toodles-app/app
+COPY src/ /toodles-app/src
+COPY test/ /toodles-app/test
+COPY web/ /toodles-app/web
+COPY README.md /toodles-app/
 
 RUN stack install --only-dependencies
 
-COPY . /app
+RUN stack install
 
-RUN stack install --ghc-options '-optl-static'
+FROM debian:stretch
 
-FROM alpine:latest
-
-WORKDIR /app
-COPY --from=build-env /app .
+WORKDIR /toodles-app
+COPY --from=build-env /toodles-app .
 COPY --from=build-env /root/.local/bin/toodles /usr/local/bin/
 
 VOLUME /repo
 
 EXPOSE 9001
+
+# Due to issues described in https://github.com/aviaviavi/toodles/issues/54, we
+# have to install stack to make the binary from the previous step work in our
+# container
+RUN apt-get update
+RUN apt-get install -y wget
+RUN wget -qO- https://get.haskellstack.org/ | sh
 
 CMD ["toodles","-d","/repo/"]
