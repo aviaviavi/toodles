@@ -1,7 +1,7 @@
+{-# LANGUAGE BangPatterns        #-}
 {-# LANGUAGE DataKinds           #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-
 {-# LANGUAGE TypeOperators       #-}
 
 module Server where
@@ -67,13 +67,16 @@ root (ToodlesState _ dPath) path =
 
 showRawFile :: ToodlesState -> Integer -> Handler Html
 showRawFile (ToodlesState ref _) eId = do
-    (TodoListResult r _) <- liftIO $ readIORef ref
-    let entry = find (\t -> entryId t == eId) r
-    liftIO $
-        maybe
-        (return "Not found")
-        (\e -> addAnchors <$> readFile (sourceFile e))
-        entry
+    storedResults <- liftIO $ readIORef ref
+    case storedResults of
+      (Just (TodoListResult r _)) -> do
+        let entry = find (\t -> entryId t == eId) r
+        liftIO $
+            maybe
+            (return "Not found")
+            (\e -> addAnchors <$> readFile (sourceFile e))
+            entry
+      Nothing -> error "no files to show"
 
     where
     addAnchors :: String -> Html
@@ -87,17 +90,20 @@ showRawFile (ToodlesState ref _) eId = do
 
 editTodos :: ToodlesState -> EditTodoRequest -> Handler Text
 editTodos (ToodlesState ref _) req = do
-  (TodoListResult r _) <- liftIO $ readIORef ref
-  let editedList =
-        map
-          (\t ->
-             if willEditTodo req t
-               then editTodo req t
-               else t)
-          r
-      editedFilteredList = filter (willEditTodo req) editedList
-  _ <- mapM_ recordUpdates editedFilteredList
-  return "{}"
+  storedResults <- liftIO $ readIORef ref
+  case storedResults of
+    (Just (TodoListResult r _)) -> do
+      let editedList =
+            map
+              (\t ->
+                if willEditTodo req t
+                  then editTodo req t
+                  else t)
+              r
+          editedFilteredList = filter (willEditTodo req) editedList
+      _ <- mapM_ recordUpdates editedFilteredList
+      return "{}"
+    Nothing -> error "no stored todos to edit"
   where
     willEditTodo :: EditTodoRequest -> TodoEntry -> Bool
     willEditTodo editRequest entry = entryId entry `elem` editIds editRequest
@@ -189,14 +195,17 @@ updateTodoLinesInFile f todo = do
 
 deleteTodos :: ToodlesState -> DeleteTodoRequest -> Handler Text
 deleteTodos (ToodlesState ref _) req = do
-    refVal@(TodoListResult r _) <- liftIO $ readIORef ref
-    let toDelete = filter (\t -> entryId t `elem` ids req) r
-    liftIO $ doUntilNull removeAndAdjust toDelete
-    let remainingResults = filter (\t -> entryId t `notElem` map entryId toDelete) r
-    let updatedResults = foldl (flip adjustLinesAfterDeletionOf) remainingResults toDelete
-    let remainingResultsRef = refVal { todos = updatedResults }
-    _ <- liftIO $ atomicModifyIORef' ref (const (remainingResultsRef, remainingResultsRef))
-    return "{}"
+    storedResults <- liftIO $ readIORef ref
+    case storedResults of
+      (Just refVal@(TodoListResult r _)) -> do
+        let toDelete = filter (\t -> entryId t `elem` ids req) r
+        liftIO $ doUntilNull removeAndAdjust toDelete
+        let remainingResults = filter (\t -> entryId t `notElem` map entryId toDelete) r
+        let updatedResults = foldl (flip adjustLinesAfterDeletionOf) remainingResults toDelete
+        let remainingResultsRef = refVal { todos = updatedResults }
+        _ <- liftIO $ atomicModifyIORef' ref (const (Just remainingResultsRef, Just remainingResultsRef))
+        return "{}"
+      Nothing -> error "no stored todos"
 
     where
 
@@ -239,14 +248,17 @@ setAbsolutePath args = do
     return $ args {directory = absolute}
 
 getFullSearchResults :: ToodlesState -> Bool -> IO TodoListResult
-getFullSearchResults (ToodlesState ref _) recompute =
-  if recompute
+getFullSearchResults (ToodlesState ref _) recompute = do
+  result <- readIORef ref
+  if recompute || isNothing result
     then do
       putStrLn "refreshing todo's"
       userArgs <- toodlesArgs >>= setAbsolutePath
       sResults <- runFullSearch userArgs
-      atomicModifyIORef' ref (const (sResults, sResults))
-    else putStrLn "cached read" >> readIORef ref
+      atomicModifyIORef' ref (const (Just sResults, sResults))
+    else do
+      putStrLn "cached read"
+      return $ fromMaybe (error "tried to read from the cache when there wasn't anything there") result
 
 runFullSearch :: ToodlesArgs -> IO TodoListResult
 runFullSearch userArgs = do
@@ -259,8 +271,8 @@ runFullSearch userArgs = do
         $ putStrLn $ "[WARNING] Invalid .toodles.yaml: " ++ show config
     let config' = fromRight (ToodlesConfig [] []) config
     allFiles <- getAllFiles config' projectRoot
-    let parsedTodos = concatMap (runTodoParser $ userFlag userArgs ++ flags config') allFiles
-        filteredTodos = filter (filterSearch (assignee_search userArgs)) parsedTodos
+    parsedTodos <- concat <$> mapM (parseFileAndLog userArgs config') allFiles
+    let filteredTodos = filter (filterSearch (assignee_search userArgs)) parsedTodos
         resultList = limitSearch filteredTodos $ limit_results userArgs
         indexedResults = map (\(i, r) -> r {entryId = i}) $ zip [1 ..] resultList
     return $ TodoListResult indexedResults ""
@@ -273,6 +285,14 @@ runFullSearch userArgs = do
     limitSearch :: [TodoEntry] -> Int -> [TodoEntry]
     limitSearch todoList 0 = todoList
     limitSearch todoList n = take n todoList
+
+parseFileAndLog :: ToodlesArgs -> ToodlesConfig -> SourceFile -> IO [TodoEntry]
+parseFileAndLog  userArgs config f = do
+  -- the strictness is so we can print "done" when we're actually done
+  !_ <- putStrLn $ fullPath f
+  !result <- return (runTodoParser (userFlag userArgs ++ flags config) f)
+  !_ <- putStrLn "done"
+  return result
 
 getAllFiles :: ToodlesConfig -> FilePath -> IO [SourceFile]
 getAllFiles (ToodlesConfig ignoredPaths _) basePath =

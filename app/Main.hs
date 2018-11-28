@@ -16,15 +16,16 @@ import           Text.Printf              (printf)
 main :: IO ()
 main = do
   userArgs <- toodlesArgs >>= setAbsolutePath
-  sResults <- runFullSearch userArgs
   case userArgs of
-    (ToodlesArgs _ _ _ _ True _) -> mapM_ (putStrLn . prettyFormat) $ todos sResults
+    (ToodlesArgs _ _ _ _ True _) -> do
+      sResults <- runFullSearch userArgs
+      mapM_ (putStrLn . prettyFormat) $ todos sResults
     _ -> do
-          let webPort = fromMaybe 9001 $ port userArgs
-          ref <- newIORef sResults
-          dataDir <- (++ "/web") <$> getDataDir
-          putStrLn $ "serving on " ++ show webPort
-          run webPort $ app $ ToodlesState ref dataDir
+      let webPort = fromMaybe 9001 $ port userArgs
+      ref <- newIORef Nothing
+      dataDir <- (++ "/web") <$> getDataDir
+      putStrLn $ "serving on " ++ show webPort
+      run webPort $ app $ ToodlesState ref dataDir
 
 prettyFormat :: TodoEntry -> String
 prettyFormat (TodoEntryHead _ l a p n entryPriority f _ _ _ _ _ _) =

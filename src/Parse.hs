@@ -13,7 +13,6 @@ import           Data.Maybe                 (fromJust, fromMaybe, isJust,
 import           Data.Text                  (Text)
 import qualified Data.Text                  as T
 import           Data.Void                  (Void)
-import           Debug.Trace
 import           Text.Megaparsec
 import           Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
@@ -212,14 +211,14 @@ nextState a b = error ("No next state for " ++ show a ++ "   " ++ show b)
 runTodoParser :: [UserFlag] -> SourceFile -> [TodoEntry]
 runTodoParser us (SourceFile path ls) =
   let parsedTodoLines =
-        trace ("path done: " ++ path) $ foldl
+        foldl
           (fileParseFoldFn
           us
           path)
           (ParseStateUnknown, [])
           (zip [1 ..] ls)
       groupedTodos = foldl foldTodoHelper ([], False) (snd parsedTodoLines)
-  in trace path fst groupedTodos
+  in fst groupedTodos
 
   where
     -- fold fn to concatenate todos that a multiple, single line comments

@@ -23,7 +23,7 @@ data SourceFile = SourceFile
 type LineNumber = Integer
 
 data ToodlesState = ToodlesState
-  { results  :: IORef TodoListResult,
+  { results  :: IORef (Maybe TodoListResult),
     dataPath :: FilePath
   }
 
