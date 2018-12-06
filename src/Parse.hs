@@ -77,7 +77,7 @@ integer = lexeme $ L.signed space L.decimal
 parseAssignee :: Parser String
 parseAssignee = many (noneOf [')', '|', '='])
 
--- TODO(avi|p=3|#cleanup) - fix and type this better
+-- TODO (avi|p=3|#cleanup) - fix and type this better
 parseDetails :: Text -> (Maybe Text, Maybe Text, [(Text, Text)], [Text])
 parseDetails toParse =
   let dataTokens = T.splitOn "|" toParse
