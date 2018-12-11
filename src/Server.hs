@@ -89,7 +89,7 @@ showRawFile (ToodlesState ref _) eId = do
                 codeLines)
 
 editTodos :: ToodlesState -> EditTodoRequest -> Handler Text
-editTodos (ToodlesState ref _) req = do
+editTodos s@(ToodlesState ref _) req = do
   storedResults <- liftIO $ readIORef ref
   case storedResults of
     (Just (TodoListResult r _)) -> do
@@ -102,6 +102,7 @@ editTodos (ToodlesState ref _) req = do
               r
           editedFilteredList = filter (willEditTodo req) editedList
       _ <- mapM_ recordUpdates editedFilteredList
+      _ <- updateCache s editedFilteredList
       return "{}"
     Nothing -> error "no stored todos to edit"
   where
@@ -129,6 +130,26 @@ editTodos (ToodlesState ref _) req = do
 
     recordUpdates :: MonadIO m => TodoEntry -> m ()
     recordUpdates t = void $ updateTodoLinesInFile renderTodo t
+
+data UpdateType = UpdateTypeEdit | UpdateTypeDelete deriving (Eq)
+
+updateCache :: MonadIO m => ToodlesState -> [TodoEntry] -> m ()
+updateCache (ToodlesState ref _) entries = do
+  storedResults <- liftIO $ readIORef ref
+  case storedResults of
+    (Just (TodoListResult currentCache _)) -> do
+      let idsToUpdate = map entryId entries
+          newCache =
+            TodoListResult
+              ((++ entries)
+                 (filter
+                    (\item -> entryId item `notElem` idsToUpdate)
+                    currentCache))
+              "edits applied"
+      _ <-
+        liftIO $ atomicModifyIORef' ref (const (Just newCache, Just newCache))
+      return ()
+    Nothing -> error "no stored todos to update"
 
 renderTodo :: TodoEntry -> [Text]
 renderTodo t =
