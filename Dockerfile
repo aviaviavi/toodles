@@ -1,4 +1,4 @@
-FROM haskell:8.4 as build-env
+FROM haskell:8.4.3 as build-env
 
 WORKDIR /toodles-app
 
