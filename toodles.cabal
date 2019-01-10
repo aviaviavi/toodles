@@ -1,13 +1,13 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.0.
+-- This file has been generated from package.yaml by hpack version 0.31.1.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: eca068224b8e938feec8b371e63c8819e81e6d2030806c1f220e08823596b7f7
+-- hash: 4a7203a62cb73d18a04c19e692b5d3e65c56cf8d5610cfe261c354b5f00bc335
 
 name:           toodles
-version:        1.0.2
+version:        1.1.0
 synopsis:       Manage the TODO entries in your code
 description:    Toodles scrapes your entire repository for TODO entries and organizes them so you can manage your project directly from the code. View, filter, sort, and edit your TODO\'s with an easy to use web application. When you make changes via toodles, the edits will be applied directly the TODO entries in your code. When you\'re done, commit and push your changes to share them with your team!
 category:       Project Management
@@ -51,23 +51,23 @@ library
   ghc-options: -Wall -Wcompat
   build-depends:
       MissingH >=1.4.0.1
-    , aeson ==1.3.1.1
+    , aeson >=1.3.1.1
     , base >=4.0 && <5
     , blaze-html ==0.9.1.1
     , cmdargs ==0.10.20
-    , directory ==1.3.1.5
+    , directory >=1.3.1.5
     , hspec >=2.4.4
     , hspec-expectations >=0.8.2
-    , megaparsec ==6.5.0
+    , megaparsec >=6.5.0
     , regex-posix ==0.95.2
-    , servant ==0.14.1
+    , servant >=0.14.1
     , servant-blaze ==0.8
-    , servant-server ==0.14.1
+    , servant-server >=0.14.1
     , strict ==0.3.2
     , text ==1.2.3.1
     , wai ==3.2.1.2
     , warp ==3.2.25
-    , yaml ==0.8.32
+    , yaml >=0.8.32
   default-language: Haskell2010
 
 executable toodles
@@ -85,23 +85,23 @@ executable toodles
   ghc-options: -Wall -Wcompat -threaded -rtsopts -O3 -Wall -with-rtsopts=-N
   build-depends:
       MissingH >=1.4.0.1
-    , aeson ==1.3.1.1
+    , aeson >=1.3.1.1
     , base >=4.0 && <5
     , blaze-html ==0.9.1.1
     , cmdargs ==0.10.20
-    , directory ==1.3.1.5
+    , directory >=1.3.1.5
     , hspec >=2.4.4
     , hspec-expectations >=0.8.2
-    , megaparsec ==6.5.0
+    , megaparsec >=6.5.0
     , regex-posix ==0.95.2
-    , servant ==0.14.1
+    , servant >=0.14.1
     , servant-blaze ==0.8
-    , servant-server ==0.14.1
+    , servant-server >=0.14.1
     , strict ==0.3.2
     , text ==1.2.3.1
     , wai ==3.2.1.2
     , warp ==3.2.25
-    , yaml ==0.8.32
+    , yaml >=0.8.32
   default-language: Haskell2010
 
 test-suite toodles-test
@@ -120,22 +120,22 @@ test-suite toodles-test
   ghc-options: -Wall -Wcompat -threaded -rtsopts -with-rtsopts=-N -w
   build-depends:
       MissingH >=1.4.0.1
-    , aeson ==1.3.1.1
+    , aeson >=1.3.1.1
     , base >=4.0 && <5
     , blaze-html ==0.9.1.1
     , cmdargs ==0.10.20
-    , directory ==1.3.1.5
+    , directory >=1.3.1.5
     , hspec >=2.4.4
     , hspec-expectations >=0.8.2
-    , megaparsec ==6.5.0
+    , megaparsec >=6.5.0
     , regex-posix ==0.95.2
-    , servant ==0.14.1
+    , servant >=0.14.1
     , servant-blaze ==0.8
-    , servant-server ==0.14.1
+    , servant-server >=0.14.1
     , strict ==0.3.2
     , text ==1.2.3.1
     , toodles
     , wai ==3.2.1.2
     , warp ==3.2.25
-    , yaml ==0.8.32
+    , yaml >=0.8.32
   default-language: Haskell2010

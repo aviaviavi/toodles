@@ -29,19 +29,19 @@ parseComment state fileExtension =
   if state == ParseStateMultiLineComment
     then do
       let closingParser = symbol $ getMultiClosingForFileType fileExtension
-      lineWithClosing <- optional . try $ manyTill anyChar closingParser
-      lineWithOutClosing <- optional $ many anyChar
+      lineWithClosing <- optional . try $ manyTill anySingle closingParser
+      lineWithOutClosing <- optional $ many anySingle
       return $ TodoBodyLine (T.pack (fromMaybe (fromJust lineWithOutClosing) lineWithOutClosing)) False (isJust lineWithClosing)
     else do
-      single <- optional . try $ manyTill anyChar (symbol $ getCommentForFileType fileExtension)
+      singleComment <- optional . try $ manyTill anySingle (symbol $ getCommentForFileType fileExtension)
       multi <-
-        if isJust single
+        if isJust singleComment
         then return Nothing
         else
-          optional . try $ manyTill anyChar (symbol $ getMultiOpeningForFileType fileExtension)
-      if isJust single || isJust multi
+          optional . try $ manyTill anySingle (symbol $ getMultiOpeningForFileType fileExtension)
+      if isJust singleComment || isJust multi
         then do
-          b <- many anyChar
+          b <- many anySingle
           return $ TodoBodyLine (T.pack b) (isJust  multi) (getMultiClosingForFileType fileExtension `T.isInfixOf` T.pack b)
         else
           fail "No open comment marker found"
@@ -307,11 +307,11 @@ parseTodo state us path lineNum = try (parseTodoEntryHead us)
           leadingTextMulti <- optional (try $ many spaceChar)
           parseEntryHead NonOpenedComment (fromMaybe "" leadingTextMulti)
         else do
-          entryLeadingTextSingle <- optional (try (manyTill anyChar (lookAhead . prefixParserForFileType $ getExtension path)))
+          entryLeadingTextSingle <- optional (try (manyTill anySingle (lookAhead . prefixParserForFileType $ getExtension path)))
           entryLeadingTextMulti <-
             if isNothing entryLeadingTextSingle
             then
-              optional (manyTill anyChar (lookAhead . multiPrefixParserForFileType $ getExtension path))
+              optional (manyTill anySingle (lookAhead . multiPrefixParserForFileType $ getExtension path))
             else
               return Nothing
 
@@ -340,8 +340,8 @@ parseTodo state us path lineNum = try (parseTodoEntryHead us)
             _ <- optional $ symbol "-"
             _ <- optional $ symbol ":"
             let closingParser = symbol $ getMultiClosingForFileType (getExtension path)
-            lineWithClosing <- optional . try $ manyTill anyChar closingParser
-            lineWithOutClosing <- optional $ many anyChar
+            lineWithClosing <- optional . try $ manyTill anySingle closingParser
+            lineWithOutClosing <- optional $ many anySingle
             return $
                 TodoEntryHead
                 0
