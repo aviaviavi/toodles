@@ -98,7 +98,7 @@ support for this to be user configurable
 ### Installing
 
 The easiest way to get toodles is via [stack](https://docs.haskellstack.org).
-Just a `stack install toodles` and you're done! Alternatively, with GHC 8.4.3
+Just a `stack install --resolver=lts-12.14 toodles` and you're done! Alternatively, with GHC 8.4.3
 you can use [cabal](https://www.haskell.org/cabal/download.html). If there is
 desire for it I can look into precompiled distribution.
 
