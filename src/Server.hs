@@ -10,6 +10,7 @@ import           Config
 import           Parse
 import           ToodlesApi
 import           Types
+import           FilteredRecurseDir
 
 import qualified Control.Exception      as E
 import           Control.Monad
@@ -319,8 +320,8 @@ getAllFiles :: ToodlesConfig -> FilePath -> IO [SourceFile]
 getAllFiles (ToodlesConfig ignoredPaths _) basePath =
   E.catch
     (do putStrLn $ printf "Running toodles for path: %s" basePath
-        files <- recurseDir SystemFS basePath
-        let validFiles = filter isValidFile files
+        files <- recurseFilterDir SystemFS basePath (return . not . ignoreFile)
+        let validFiles = filter fileHasValidExtension files
         mapM
           (\f ->
              SourceFile f . (map T.pack . lines) <$>
@@ -333,20 +334,16 @@ getAllFiles (ToodlesConfig ignoredPaths _) basePath =
 
     where
 
-    isValidFile :: FilePath -> Bool
-    isValidFile path = fileHasValidExtension && not ignoreFile
+    ignoreFile :: FilePath -> Bool
+    ignoreFile path =
+        let p = T.pack path
+        in T.isInfixOf "node_modules" p || T.isSuffixOf "pb.go" p ||
+            T.isSuffixOf "_pb2.py" p ||
+            any (\r -> path =~ r :: Bool) ignoredPaths
 
-        where
+    fileHasValidExtension :: FilePath -> Bool
+    fileHasValidExtension path = any (\ext -> ext `T.isSuffixOf` T.pack path) (map extension fileTypeToComment)
 
-        fileHasValidExtension :: Bool
-        fileHasValidExtension = any (\ext -> ext `T.isSuffixOf` T.pack path) (map extension fileTypeToComment)
-
-        ignoreFile :: Bool
-        ignoreFile =
-            let p = T.pack path
-            in T.isInfixOf "node_modules" p || T.isSuffixOf "pb.go" p ||
-                T.isSuffixOf "_pb2.py" p ||
-                any (\r -> path =~ r :: Bool) ignoredPaths
 
 mapHead :: (a -> a) -> [a] -> [a]
 mapHead f (x:xs) = f x : xs

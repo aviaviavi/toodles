@@ -52,6 +52,7 @@ library:
   - blaze-html ==0.9.1.1
   - cmdargs ==0.10.20
   - directory ==1.3.1.5
+  - filepath ==1.4.2
   - megaparsec ==6.5.0
   - regex-posix ==0.95.2
   - servant ==0.14.1
@@ -83,6 +84,7 @@ executables:
     - blaze-html ==0.9.1.1
     - cmdargs ==0.10.20
     - directory ==1.3.1.5
+    - filepath ==1.4.2
     - megaparsec ==6.5.0
     - regex-posix ==0.95.2
     - servant ==0.14.1
@@ -114,6 +116,7 @@ tests:
     - blaze-html ==0.9.1.1
     - cmdargs ==0.10.20
     - directory ==1.3.1.5
+    - filepath ==1.4.2
     - megaparsec ==6.5.0
     - regex-posix ==0.95.2
     - servant ==0.14.1
