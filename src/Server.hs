@@ -29,7 +29,6 @@ import           Servant
 import           System.Directory
 import           System.IO.HVFS
 import qualified System.IO.Strict       as SIO
-import           System.Path
 import           System.Path.NameManip
 import           Text.Blaze.Html5       (Html)
 import qualified Text.Blaze.Html5       as BZ
