@@ -10,7 +10,6 @@ import           Config
 import           Parse
 import           ToodlesApi
 import           Types
-import           FilteredRecurseDir
 
 import qualified Control.Exception      as E
 import           Control.Monad
@@ -27,7 +26,7 @@ import qualified Data.Text              as T
 import qualified Data.Yaml              as Y
 import           Servant
 import           System.Directory
-import           System.IO.HVFS
+import           System.Directory.Extra
 import qualified System.IO.Strict       as SIO
 import           System.Path.NameManip
 import           Text.Blaze.Html5       (Html)
@@ -319,7 +318,7 @@ getAllFiles :: ToodlesConfig -> FilePath -> IO [SourceFile]
 getAllFiles (ToodlesConfig ignoredPaths _) basePath =
   E.catch
     (do putStrLn $ printf "Running toodles for path: %s" basePath
-        files <- recurseFilterDir SystemFS basePath (return . not . ignoreFile)
+        files <- listFilesInside (return . not . ignoreFile) basePath
         let validFiles = filter fileHasValidExtension files
         mapM
           (\f ->

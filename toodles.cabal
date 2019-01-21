@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 3e491112d2297954f078aacab7b353d492a9606c6f58d268655910a4b48ecfce
+-- hash: 1b4520f165439b7fb3fce7f9d4d7a56afe20ac9ae86140d2b337e14f0517cbb6
 
 name:           toodles
 version:        1.0.2
@@ -45,7 +45,6 @@ library
       ToodlesApi
       Server
   other-modules:
-      FilteredRecurseDir
       Paths_toodles
   hs-source-dirs:
       src
@@ -57,7 +56,7 @@ library
     , blaze-html ==0.9.1.1
     , cmdargs ==0.10.20
     , directory ==1.3.1.5
-    , filepath ==1.4.2
+    , extra ==1.6.13
     , hspec >=2.4.4
     , hspec-expectations >=0.8.2
     , megaparsec ==6.5.0
@@ -76,7 +75,6 @@ executable toodles
   main-is: Main.hs
   other-modules:
       Config
-      FilteredRecurseDir
       Parse
       Server
       ToodlesApi
@@ -93,7 +91,7 @@ executable toodles
     , blaze-html ==0.9.1.1
     , cmdargs ==0.10.20
     , directory ==1.3.1.5
-    , filepath ==1.4.2
+    , extra ==1.6.13
     , hspec >=2.4.4
     , hspec-expectations >=0.8.2
     , megaparsec ==6.5.0
@@ -113,7 +111,6 @@ test-suite toodles-test
   main-is: Spec.hs
   other-modules:
       Config
-      FilteredRecurseDir
       Parse
       Server
       ToodlesApi
@@ -130,7 +127,7 @@ test-suite toodles-test
     , blaze-html ==0.9.1.1
     , cmdargs ==0.10.20
     , directory ==1.3.1.5
-    , filepath ==1.4.2
+    , extra ==1.6.13
     , hspec >=2.4.4
     , hspec-expectations >=0.8.2
     , megaparsec ==6.5.0
