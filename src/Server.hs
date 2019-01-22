@@ -318,8 +318,8 @@ getAllFiles :: ToodlesConfig -> FilePath -> IO [SourceFile]
 getAllFiles (ToodlesConfig ignoredPaths _) basePath =
   E.catch
     (do putStrLn $ printf "Running toodles for path: %s" basePath
-        files <- listFilesInside (return . not . ignoreFile) basePath
-        let validFiles = filter fileHasValidExtension files
+        files <- listFilesInside (return . not . ignorePath) basePath
+        let validFiles = filter isValidFile files
         mapM
           (\f ->
              SourceFile f . (map T.pack . lines) <$>
@@ -332,8 +332,8 @@ getAllFiles (ToodlesConfig ignoredPaths _) basePath =
 
     where
 
-    ignoreFile :: FilePath -> Bool
-    ignoreFile path =
+    ignorePath :: FilePath -> Bool
+    ignorePath path =
         let p = T.pack path
         in T.isInfixOf "node_modules" p || T.isSuffixOf "pb.go" p ||
             T.isSuffixOf "_pb2.py" p ||
@@ -341,6 +341,9 @@ getAllFiles (ToodlesConfig ignoredPaths _) basePath =
 
     fileHasValidExtension :: FilePath -> Bool
     fileHasValidExtension path = any (\ext -> ext `T.isSuffixOf` T.pack path) (map extension fileTypeToComment)
+
+    isValidFile :: FilePath -> Bool
+    isValidFile path = (not $ ignorePath path) && fileHasValidExtension path
 
 
 mapHead :: (a -> a) -> [a] -> [a]
