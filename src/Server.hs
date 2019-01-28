@@ -26,9 +26,8 @@ import qualified Data.Text              as T
 import qualified Data.Yaml              as Y
 import           Servant
 import           System.Directory
-import           System.IO.HVFS
+import           System.Directory.Extra
 import qualified System.IO.Strict       as SIO
-import           System.Path
 import           System.Path.NameManip
 import           Text.Blaze.Html5       (Html)
 import qualified Text.Blaze.Html5       as BZ
@@ -319,7 +318,7 @@ getAllFiles :: ToodlesConfig -> FilePath -> IO [SourceFile]
 getAllFiles (ToodlesConfig ignoredPaths _) basePath =
   E.catch
     (do putStrLn $ printf "Running toodles for path: %s" basePath
-        files <- recurseDir SystemFS basePath
+        files <- listFilesInside (return . not . ignorePath) basePath
         let validFiles = filter isValidFile files
         mapM
           (\f ->
@@ -333,20 +332,19 @@ getAllFiles (ToodlesConfig ignoredPaths _) basePath =
 
     where
 
+    ignorePath :: FilePath -> Bool
+    ignorePath path =
+        let p = T.pack path
+        in T.isInfixOf "node_modules" p || T.isSuffixOf "pb.go" p ||
+            T.isSuffixOf "_pb2.py" p ||
+            any (\r -> path =~ r :: Bool) ignoredPaths
+
+    fileHasValidExtension :: FilePath -> Bool
+    fileHasValidExtension path = any (\ext -> ext `T.isSuffixOf` T.pack path) (map extension fileTypeToComment)
+
     isValidFile :: FilePath -> Bool
-    isValidFile path = fileHasValidExtension && not ignoreFile
+    isValidFile path = (not $ ignorePath path) && fileHasValidExtension path
 
-        where
-
-        fileHasValidExtension :: Bool
-        fileHasValidExtension = any (\ext -> ext `T.isSuffixOf` T.pack path) (map extension fileTypeToComment)
-
-        ignoreFile :: Bool
-        ignoreFile =
-            let p = T.pack path
-            in T.isInfixOf "node_modules" p || T.isSuffixOf "pb.go" p ||
-                T.isSuffixOf "_pb2.py" p ||
-                any (\r -> path =~ r :: Bool) ignoredPaths
 
 mapHead :: (a -> a) -> [a] -> [a]
 mapHead f (x:xs) = f x : xs

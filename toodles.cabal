@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.0.
+-- This file has been generated from package.yaml by hpack version 0.31.1.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: eca068224b8e938feec8b371e63c8819e81e6d2030806c1f220e08823596b7f7
+-- hash: 1b4520f165439b7fb3fce7f9d4d7a56afe20ac9ae86140d2b337e14f0517cbb6
 
 name:           toodles
 version:        1.0.2
@@ -56,6 +56,7 @@ library
     , blaze-html ==0.9.1.1
     , cmdargs ==0.10.20
     , directory ==1.3.1.5
+    , extra ==1.6.13
     , hspec >=2.4.4
     , hspec-expectations >=0.8.2
     , megaparsec ==6.5.0
@@ -90,6 +91,7 @@ executable toodles
     , blaze-html ==0.9.1.1
     , cmdargs ==0.10.20
     , directory ==1.3.1.5
+    , extra ==1.6.13
     , hspec >=2.4.4
     , hspec-expectations >=0.8.2
     , megaparsec ==6.5.0
@@ -125,6 +127,7 @@ test-suite toodles-test
     , blaze-html ==0.9.1.1
     , cmdargs ==0.10.20
     , directory ==1.3.1.5
+    , extra ==1.6.13
     , hspec >=2.4.4
     , hspec-expectations >=0.8.2
     , megaparsec ==6.5.0
