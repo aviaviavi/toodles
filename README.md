@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/aviaviavi/toodles.svg?branch=master)](https://travis-ci.org/aviaviavi/toodles)
 [![Hackage](https://img.shields.io/hackage/v/toodles.svg)](https://hackage.haskell.org/package/toodles)
+[![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/toodles-todos/community)
 
 Toodles scrapes your entire repository for TODO entries and organizes them so
 you can manage your project directly from the code. View, filter, sort, and edit
@@ -166,8 +167,9 @@ Contributions in any form are welcome! A few bits of info:
 - Don't be shy, ask questions! Contributing to Toodles should be welcoming for
   people at any level of programming familiarity. Whether it's a new feature,
   bug fix, or docs, any contribution is very appreciated.
+- Open an issue or jump into the chat room on [gitter](https://gitter.im/toodles-todos/community)
 - Before you start coding, please comment or mark a particular issue as "in
   progress", or even open your pull request as a work in progress (WIP). This is
   to help avoid having multiple people work on the same thing.
-- If github issues don't cut it, feel free to reach out on twitter
+- If github issues don't cut it, feel free to reach out on gitter or twitter
   [@avi_press](https://twitter.com/avi_press)
