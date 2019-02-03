@@ -1,10 +1,10 @@
-{-# LANGUAGE DataKinds,
-             ScopedTypeVariables,
-             TypeOperators #-}
+{-# LANGUAGE DataKinds           #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators       #-}
 
 module ToodlesApi where
 
-import Types
+import           Types
 
 import           Data.Proxy         (Proxy)
 import           Data.Text          (Text)
@@ -17,6 +17,8 @@ type ToodlesAPI = "todos" :> QueryFlag "recompute" :> Get '[JSON] TodoListResult
              :<|> "todos" :> "delete" :> ReqBody '[JSON] DeleteTodoRequest :> Post '[JSON] Text
 
              :<|> "todos" :> "edit" :> ReqBody '[JSON] EditTodoRequest :> Post '[JSON] Text
+
+             :<|> "license" :> Get '[JSON] GetLicenseResponse
 
              :<|> "static" :> Raw
 

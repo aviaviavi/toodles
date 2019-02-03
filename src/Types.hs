@@ -5,6 +5,8 @@
 
 module Types where
 
+import           License
+
 import           Data.Aeson       (FromJSON, ToJSON, Value (String), parseJSON,
                                    toJSON)
 import           Data.Aeson.Types (typeMismatch)
@@ -24,7 +26,8 @@ type LineNumber = Integer
 
 data ToodlesState = ToodlesState
   { results  :: IORef (Maybe TodoListResult),
-    dataPath :: FilePath
+    dataPath :: FilePath,
+    userTier :: UserTier
   }
 
 data CommentType = SingleLine | MultiLine deriving (Show, Eq, Generic)
@@ -75,6 +78,11 @@ data EditTodoRequest = EditTodoRequest
   , setPriority :: Maybe Integer
   } deriving (Show, Generic)
 instance FromJSON EditTodoRequest
+
+data GetLicenseResponse = GetLicenseResponse
+  { toodlesTier:: UserTier
+  } deriving (Show, Generic)
+instance ToJSON GetLicenseResponse
 
 data Flag = TODO | FIXME | XXX | UF UserFlag
   deriving (Generic)

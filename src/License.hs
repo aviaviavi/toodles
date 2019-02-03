@@ -6,25 +6,28 @@
 
 
 module License
-  (readLicense) where
+  (
+    UserTier(..),
+ToodlesLicense(..),
+
+    readLicense
+  ) where
 
 import           Paths_toodles
 
-import           Control.Exception
 import           Data.Aeson
-import           Data.Aeson.Encode.Pretty
 import qualified Data.ByteString.Base64.Lazy as B64
 import qualified Data.ByteString.Lazy.Char8  as LB
-import           Data.Maybe
 import           Data.Text                   (Text)
 import qualified Data.Text                   as T
 import           Data.Time.Clock.POSIX
 import           GHC.Generics
 import           System.Directory
+import           System.Exit
 import           System.Process
 
 data UserTier
-  = BadLicense
+  = BadLicense String
   | NoLiscense
   | Individual
   | Commercial
@@ -66,13 +69,10 @@ isLicenseValid publicKeyPath (License _ encodedPayload sig) = do
         ]
       decodedPayload =
         decode (B64.decodeLenient . LB.pack $ T.unpack encodedPayload)
-  result <-
-    catch
-      (readProcess "python" args "")
-      (\(e :: IOException) ->
-         return $ displayException e)
+  (exitcode, stdout, _) <- readProcessWithExitCode "python" args ""
   return $
-    let validated = ("True" == (T.strip $ T.pack result))
-    in if validated && (maybe 0 validEnd decodedPayload >= now)
-        then Right Commercial
-        else Left "Invalid license file"
+    let validated = ("True" == T.strip (T.pack stdout))
+    in if (exitcode == ExitSuccess) &&
+          validated && (maybe 0 validEnd decodedPayload >= now)
+         then Right Commercial
+         else Left "Invalid license file"

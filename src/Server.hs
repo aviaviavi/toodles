@@ -54,18 +54,22 @@ app s = serve toodlesAPI server
     server = liftIO . getFullSearchResults s
         :<|> deleteTodos s
         :<|> editTodos s
+        :<|> getLicense s
         :<|> serveDirectoryFileServer (dataPath s)
         :<|> showRawFile s
         :<|> root s
 
 root :: ToodlesState -> [Text] -> Handler Html
-root (ToodlesState _ dPath) path =
+root (ToodlesState _ dPath tier) path =
     if null path then
         liftIO $ BZ.preEscapedToHtml <$> readFile (dPath ++ "/html/index.html")
     else throwError $ err404 { errBody = "Not found" }
 
+getLicense :: ToodlesState -> Handler GetLicenseResponse
+getLicense (ToodlesState _ _ tier) = return $ GetLicenseResponse tier
+
 showRawFile :: ToodlesState -> Integer -> Handler Html
-showRawFile (ToodlesState ref _) eId = do
+showRawFile (ToodlesState ref _ _) eId = do
     storedResults <- liftIO $ readIORef ref
     case storedResults of
       (Just (TodoListResult r _)) -> do
@@ -88,7 +92,7 @@ showRawFile (ToodlesState ref _) eId = do
                 codeLines)
 
 editTodos :: ToodlesState -> EditTodoRequest -> Handler Text
-editTodos s@(ToodlesState ref _) req = do
+editTodos s@(ToodlesState ref _ _) req = do
   storedResults <- liftIO $ readIORef ref
   case storedResults of
     (Just (TodoListResult r _)) -> do
@@ -133,7 +137,7 @@ editTodos s@(ToodlesState ref _) req = do
 data UpdateType = UpdateTypeEdit | UpdateTypeDelete deriving (Eq)
 
 updateCache :: MonadIO m => ToodlesState -> [TodoEntry] -> m ()
-updateCache (ToodlesState ref _) entries = do
+updateCache (ToodlesState ref _ _) entries = do
   storedResults <- liftIO $ readIORef ref
   case storedResults of
     (Just (TodoListResult currentCache _)) -> do
@@ -214,7 +218,7 @@ updateTodoLinesInFile f todo = do
     slice a b xs = take (b - a + 1) (drop a xs)
 
 deleteTodos :: ToodlesState -> DeleteTodoRequest -> Handler Text
-deleteTodos (ToodlesState ref _) req = do
+deleteTodos (ToodlesState ref _ _) req = do
     storedResults <- liftIO $ readIORef ref
     case storedResults of
       (Just refVal@(TodoListResult r _)) -> do
@@ -268,7 +272,7 @@ setAbsolutePath args = do
     return $ args {directory = absolute}
 
 getFullSearchResults :: ToodlesState -> Bool -> IO TodoListResult
-getFullSearchResults (ToodlesState ref _) recompute = do
+getFullSearchResults (ToodlesState ref _ _) recompute = do
   result <- readIORef ref
   if recompute || isNothing result
     then do
