@@ -27,7 +27,7 @@ type LineNumber = Integer
 data ToodlesState = ToodlesState
   { results  :: IORef (Maybe TodoListResult),
     dataPath :: FilePath,
-    userTier :: UserTier
+    userTier :: IORef UserTier
   }
 
 data CommentType = SingleLine | MultiLine deriving (Show, Eq, Generic)

@@ -28,7 +28,8 @@ main = do
       let webPort = fromMaybe 9001 $ port userArgs
       ref <- newIORef Nothing
       putStrLn $ "serving on " ++ show webPort
-      run webPort $ app $ ToodlesState ref (dataDir ++ "/web") license
+      tierRef <- newIORef license
+      run webPort $ app $ ToodlesState ref (dataDir ++ "/web") tierRef
 
 prettyFormat :: TodoEntry -> String
 prettyFormat (TodoEntryHead _ l a p n entryPriority f _ _ _ _ _ _) =

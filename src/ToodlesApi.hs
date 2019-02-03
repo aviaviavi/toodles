@@ -18,7 +18,7 @@ type ToodlesAPI = "todos" :> QueryFlag "recompute" :> Get '[JSON] TodoListResult
 
              :<|> "todos" :> "edit" :> ReqBody '[JSON] EditTodoRequest :> Post '[JSON] Text
 
-             :<|> "license" :> Get '[JSON] GetLicenseResponse
+             :<|> "license" :> Post '[JSON] GetLicenseResponse
 
              :<|> "static" :> Raw
 

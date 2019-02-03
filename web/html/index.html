@@ -15,7 +15,7 @@
             <div class="navbar-brand">
                 <div class="navbar-item" href="#">
                     <span><img src="/static/img/favicon.png" alt="favicon" height="25" width="25"></span>
-                    <span class="toodles-nav-title-text">Toodles</span>
+                    <span class="toodles-nav-title-text">Toodles <span v-show="license == 'Commercial'">| Pro</span></span>
                 </div>
                 <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" v-on:click="toggleMenuBurger">
                     <span aria-hidden="true"></span>
@@ -58,6 +58,11 @@
                 </div>
             </div>
         </nav>
+        <section v-show="license == 'BadLicense'" class="bad-license-banner is-fullwidth" >
+            <div class="container">
+                Your license file is invalid
+            </div>
+        </section>
         <div class="modal">
             <div class="modal-background" @click="closeModal"></div>
             <div class="modal-content">

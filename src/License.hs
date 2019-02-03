@@ -69,7 +69,9 @@ isLicenseValid publicKeyPath (License _ encodedPayload sig) = do
         ]
       decodedPayload =
         decode (B64.decodeLenient . LB.pack $ T.unpack encodedPayload)
-  (exitcode, stdout, _) <- readProcessWithExitCode "python" args ""
+  (exitcode, stdout, stderr) <- readProcessWithExitCode "python" args ""
+  putStrLn stderr
+  putStrLn stdout
   return $
     let validated = ("True" == T.strip (T.pack stdout))
     in if (exitcode == ExitSuccess) &&

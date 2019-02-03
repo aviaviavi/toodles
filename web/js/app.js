@@ -17,12 +17,15 @@ $(document).ready(function() {
         addKeyVals: "",
         addKeyValParseError: false,
         nothingFilledError: false,
+        license: null,
       }
     },
     created: function() {
       this.refresh()()
+      return this.getLicense()
     },
     methods: {
+      // higher order for ease of calling from vue templates
       refresh: function(recompute) {
         return function() {
           this.loading = true
@@ -120,7 +123,7 @@ $(document).ready(function() {
           console.log(name)
         }
       },
-      
+
       toggleTodo: function(todo) {
         todo.selected = !todo.selected
       },
@@ -182,6 +185,22 @@ $(document).ready(function() {
       hideDropdown: function(ev) {
         $(".navbar-menu").removeClass("is-active")
         $(".navbar-burger").removeClass("is-active")
+      },
+
+      getLicense: function() {
+        const self = this
+        $.ajax({
+          url: "/license",
+          type: "POST",
+          dataType: "json",
+          contentType: 'application/json',
+          success: function(data){
+            self.license = data.toodlesTier.tag
+          },
+          error: function(err){
+            console.error(err)
+          }
+        })
       },
 
       submitTodoEdits: function(){

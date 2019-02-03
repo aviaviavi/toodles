@@ -7,7 +7,9 @@
 module Server where
 
 import           Config
+import           License
 import           Parse
+import           Paths_toodles
 import           ToodlesApi
 import           Types
 
@@ -60,13 +62,22 @@ app s = serve toodlesAPI server
         :<|> root s
 
 root :: ToodlesState -> [Text] -> Handler Html
-root (ToodlesState _ dPath tier) path =
+root (ToodlesState _ dPath _) path =
     if null path then
         liftIO $ BZ.preEscapedToHtml <$> readFile (dPath ++ "/html/index.html")
     else throwError $ err404 { errBody = "Not found" }
 
 getLicense :: ToodlesState -> Handler GetLicenseResponse
-getLicense (ToodlesState _ _ tier) = return $ GetLicenseResponse tier
+getLicense (ToodlesState _ _ tierRef) = do
+  license <- liftIO readUserTier
+  _ <- liftIO $ atomicModifyIORef' tierRef (const (license, license))
+  return $ GetLicenseResponse license
+
+readUserTier :: IO UserTier
+readUserTier = do
+  dataDir <- getDataDir
+  licenseRead <- readLicense (dataDir ++ "/toodles-license-public-key.pem") "/etc/toodles/license.json"
+  return $ either (BadLicense) (id) licenseRead
 
 showRawFile :: ToodlesState -> Integer -> Handler Html
 showRawFile (ToodlesState ref _ _) eId = do
