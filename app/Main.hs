@@ -3,6 +3,7 @@
 module Main where
 
 import           Config
+import           License
 import           Paths_toodles
 import           Server
 import           Types
@@ -15,7 +16,10 @@ import           Text.Printf              (printf)
 
 main :: IO ()
 main = do
+  dataDir <- getDataDir
+  hasLic <- readLicense (dataDir ++ "/toodles-license-public-key.pem") "/etc/toodles/license.json"
   userArgs <- toodlesArgs >>= setAbsolutePath
+  putStrLn $ show hasLic
   case userArgs of
     (ToodlesArgs _ _ _ _ True _) -> do
       sResults <- runFullSearch userArgs
@@ -23,9 +27,8 @@ main = do
     _ -> do
       let webPort = fromMaybe 9001 $ port userArgs
       ref <- newIORef Nothing
-      dataDir <- (++ "/web") <$> getDataDir
       putStrLn $ "serving on " ++ show webPort
-      run webPort $ app $ ToodlesState ref dataDir
+      run webPort $ app $ ToodlesState ref $ dataDir ++ "/web"
 
 prettyFormat :: TodoEntry -> String
 prettyFormat (TodoEntryHead _ l a p n entryPriority f _ _ _ _ _ _) =

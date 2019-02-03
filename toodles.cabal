@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: da3fad228f05c4c1dc5691eff2d8b7f26696e6ab636205bec8b4f89e831f1e50
+-- hash: 59929f0b70bb7a9408396d9c62a7f65052d229f674e2c8e97cc76ce7845aaa20
 
 name:           toodles
 version:        1.0.3
@@ -32,6 +32,8 @@ data-files:
     web/fonts/fontawesome-webfont.woff
     web/fonts/fontawesome-webfont.woff2
     web/img/favicon.png
+    verify.py
+    toodles-license-public-key.pem
 
 source-repository head
   type: git
@@ -44,6 +46,7 @@ library
       Config
       ToodlesApi
       Server
+      License
   other-modules:
       Paths_toodles
   hs-source-dirs:
@@ -51,21 +54,27 @@ library
   ghc-options: -Wall -Wcompat
   build-depends:
       MissingH >=1.4.0.1
+    , RSA
     , aeson ==1.3.1.1
-    , base >=4.0 && <5
+    , aeson-pretty
+    , base >=4.4.0 && <5
+    , base64-bytestring
     , blaze-html ==0.9.1.1
+    , bytestring
     , cmdargs ==0.10.20
     , directory ==1.3.1.5
     , extra ==1.6.13
     , hspec >=2.4.4
     , hspec-expectations >=0.8.2
     , megaparsec ==6.5.0
+    , process
     , regex-posix ==0.95.2
     , servant ==0.14.1
     , servant-blaze ==0.8
     , servant-server ==0.14.1
     , strict ==0.3.2
     , text ==1.2.3.1
+    , time
     , wai ==3.2.1.2
     , warp ==3.2.25
     , yaml ==0.8.32
@@ -75,6 +84,7 @@ executable toodles
   main-is: Main.hs
   other-modules:
       Config
+      License
       Parse
       Server
       ToodlesApi
@@ -86,21 +96,27 @@ executable toodles
   ghc-options: -Wall -Wcompat -threaded -rtsopts -O3 -Wall -with-rtsopts=-N
   build-depends:
       MissingH >=1.4.0.1
+    , RSA
     , aeson ==1.3.1.1
-    , base >=4.0 && <5
+    , aeson-pretty
+    , base >=4.4.0 && <5
+    , base64-bytestring
     , blaze-html ==0.9.1.1
+    , bytestring
     , cmdargs ==0.10.20
     , directory ==1.3.1.5
     , extra ==1.6.13
     , hspec >=2.4.4
     , hspec-expectations >=0.8.2
     , megaparsec ==6.5.0
+    , process
     , regex-posix ==0.95.2
     , servant ==0.14.1
     , servant-blaze ==0.8
     , servant-server ==0.14.1
     , strict ==0.3.2
     , text ==1.2.3.1
+    , time
     , wai ==3.2.1.2
     , warp ==3.2.25
     , yaml ==0.8.32
@@ -111,6 +127,7 @@ test-suite toodles-test
   main-is: Spec.hs
   other-modules:
       Config
+      License
       Parse
       Server
       ToodlesApi
@@ -123,8 +140,9 @@ test-suite toodles-test
   build-depends:
       MissingH >=1.4.0.1
     , aeson ==1.3.1.1
-    , base >=4.0 && <5
+    , base >=4.4.0 && <5
     , blaze-html ==0.9.1.1
+    , bytestring
     , cmdargs ==0.10.20
     , directory ==1.3.1.5
     , extra ==1.6.13
@@ -137,6 +155,7 @@ test-suite toodles-test
     , servant-server ==0.14.1
     , strict ==0.3.2
     , text ==1.2.3.1
+    , time
     , toodles
     , wai ==3.2.1.2
     , warp ==3.2.25
