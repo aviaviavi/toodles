@@ -61,7 +61,7 @@ instance ToJSON TodoEntry
 
 data TodoListResult = TodoListResult
   { todos   :: [TodoEntry]
-  , message :: Text
+  , limited :: Bool
   } deriving (Show, Generic)
 instance ToJSON TodoListResult
 

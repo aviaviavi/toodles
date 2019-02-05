@@ -151,7 +151,7 @@ updateCache :: MonadIO m => ToodlesState -> [TodoEntry] -> m ()
 updateCache (ToodlesState ref _ _) entries = do
   storedResults <- liftIO $ readIORef ref
   case storedResults of
-    (Just (TodoListResult currentCache _)) -> do
+    (Just (TodoListResult currentCache limited)) -> do
       let idsToUpdate = map entryId entries
           newCache =
             TodoListResult
@@ -159,7 +159,7 @@ updateCache (ToodlesState ref _ _) entries = do
                  (filter
                     (\item -> entryId item `notElem` idsToUpdate)
                     currentCache))
-              "edits applied"
+              limited
       _ <-
         liftIO $ atomicModifyIORef' ref (const (Just newCache, Just newCache))
       return ()
@@ -283,13 +283,16 @@ setAbsolutePath args = do
     return $ args {directory = absolute}
 
 getFullSearchResults :: ToodlesState -> Bool -> IO TodoListResult
-getFullSearchResults (ToodlesState ref _ _) recompute = do
+getFullSearchResults (ToodlesState ref _ tierRef) recompute = do
   result <- readIORef ref
+  userLicense <- readIORef tierRef
   if recompute || isNothing result
     then do
       putStrLn "refreshing todo's"
       userArgs <- toodlesArgs >>= setAbsolutePath
-      sResults <- runFullSearch userArgs
+      putStrLn $ show userLicense
+      putStrLn $ show (if userLicense == Commercial then 0 else 500)
+      sResults <- runFullSearch (userArgs { limit_results = (if userLicense == Commercial then 0 else 500)})
       atomicModifyIORef' ref (const (Just sResults, sResults))
     else do
       putStrLn "cached read"
@@ -310,7 +313,8 @@ runFullSearch userArgs = do
     let filteredTodos = filter (filterSearch (assignee_search userArgs)) parsedTodos
         resultList = limitSearch filteredTodos $ limit_results userArgs
         indexedResults = map (\(i, r) -> r {entryId = i}) $ zip [1 ..] resultList
-    return $ TodoListResult indexedResults ""
+        limit = limit_results userArgs
+    return $ TodoListResult indexedResults (limit /= 0 && (length indexedResults >= limit))
 
     where
     filterSearch :: Maybe SearchFilter -> TodoEntry -> Bool

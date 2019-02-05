@@ -18,6 +18,8 @@ $(document).ready(function() {
         addKeyValParseError: false,
         nothingFilledError: false,
         license: null,
+        loadingLicense: false,
+        limited: false,
       }
     },
     created: function() {
@@ -52,7 +54,7 @@ $(document).ready(function() {
                   selected: false
                 }
               })
-              console.log("todos", this.todos)
+              this.limited = data.limited
               this.loading = false
 
               if (!recompute) {
@@ -189,6 +191,7 @@ $(document).ready(function() {
 
       getLicense: function() {
         const self = this
+        self.loadingLicense = true
         $.ajax({
           url: "/license",
           type: "POST",
@@ -196,6 +199,7 @@ $(document).ready(function() {
           contentType: 'application/json',
           success: function(data){
             self.license = data.toodlesTier.tag
+            self.loadingLicense = false
           },
           error: function(err){
             console.error(err)

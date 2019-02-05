@@ -58,11 +58,19 @@
                 </div>
             </div>
         </nav>
+
         <section v-show="license == 'BadLicense'" class="bad-license-banner is-fullwidth" >
             <div class="container">
-                Your license file is invalid
+                Your license file is invalid. <a v-on:click="getLicense">Try again</a>
             </div>
         </section>
+
+        <section v-show="limited" class="warning-banner is-fullwidth" >
+            <div class="container">
+                The free edition of Toodles only works for up to 500 TODO's, so your results here are truncated. Please consider upgrading to Toodles Pro.
+            </div>
+        </section>
+
         <div class="modal">
             <div class="modal-background" @click="closeModal"></div>
             <div class="modal-content">
