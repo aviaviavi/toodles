@@ -50,7 +50,6 @@ data ToodlesLicense = ToodlesLicense
 readLicense :: FilePath -> FilePath  -> IO (Either String UserTier)
 readLicense publicKeyPath licensePath  = do
   licenseExists <- doesFileExist licensePath
-  putStrLn licensePath
   if not licenseExists then
     return $ Right NoLiscense
   else do
@@ -71,7 +70,6 @@ isLicenseValid publicKeyPath (License _ encodedPayload sig) = do
         decode (B64.decodeLenient . LB.pack $ T.unpack encodedPayload)
   (exitcode, stdout, stderr) <- readProcessWithExitCode "python" args ""
   putStrLn stderr
-  putStrLn stdout
   return $
     let validated = ("True" == T.strip (T.pack stdout))
     in if (exitcode == ExitSuccess) &&

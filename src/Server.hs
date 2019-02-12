@@ -36,6 +36,9 @@ import qualified Text.Blaze.Html5       as BZ
 import           Text.Printf
 import           Text.Regex.Posix
 
+freeResultsLimit :: Int
+freeResultsLimit = 100
+
 data ToodlesConfig = ToodlesConfig
   { ignore :: [FilePath]
   , flags  :: [UserFlag]
@@ -77,7 +80,7 @@ readUserTier :: IO UserTier
 readUserTier = do
   dataDir <- getDataDir
   licenseRead <- readLicense (dataDir ++ "/toodles-license-public-key.pem") "/etc/toodles/license.json"
-  return $ either (BadLicense) (id) licenseRead
+  return $ either BadLicense id licenseRead
 
 showRawFile :: ToodlesState -> Integer -> Handler Html
 showRawFile (ToodlesState ref _ _) eId = do
@@ -151,7 +154,7 @@ updateCache :: MonadIO m => ToodlesState -> [TodoEntry] -> m ()
 updateCache (ToodlesState ref _ _) entries = do
   storedResults <- liftIO $ readIORef ref
   case storedResults of
-    (Just (TodoListResult currentCache limited)) -> do
+    (Just (TodoListResult currentCache resultLimit)) -> do
       let idsToUpdate = map entryId entries
           newCache =
             TodoListResult
@@ -159,7 +162,7 @@ updateCache (ToodlesState ref _ _) entries = do
                  (filter
                     (\item -> entryId item `notElem` idsToUpdate)
                     currentCache))
-              limited
+              resultLimit
       _ <-
         liftIO $ atomicModifyIORef' ref (const (Just newCache, Just newCache))
       return ()
@@ -290,12 +293,9 @@ getFullSearchResults (ToodlesState ref _ tierRef) recompute = do
     then do
       putStrLn "refreshing todo's"
       userArgs <- toodlesArgs >>= setAbsolutePath
-      putStrLn $ show userLicense
-      putStrLn $ show (if userLicense == Commercial then 0 else 500)
-      sResults <- runFullSearch (userArgs { limit_results = (if userLicense == Commercial then 0 else 500)})
+      sResults <- runFullSearch (userArgs { limit_results = if userLicense == Commercial then 0 else freeResultsLimit})
       atomicModifyIORef' ref (const (Just sResults, sResults))
-    else do
-      putStrLn "cached read"
+    else
       return $ fromMaybe (error "tried to read from the cache when there wasn't anything there") result
 
 runFullSearch :: ToodlesArgs -> IO TodoListResult
@@ -362,7 +362,7 @@ getAllFiles (ToodlesConfig ignoredPaths _) basePath =
     fileHasValidExtension path = any (\ext -> ext `T.isSuffixOf` T.pack path) (map extension fileTypeToComment)
 
     isValidFile :: FilePath -> Bool
-    isValidFile path = (not $ ignorePath path) && fileHasValidExtension path
+    isValidFile path = not (ignorePath path) && fileHasValidExtension path
 
 
 mapHead :: (a -> a) -> [a] -> [a]
