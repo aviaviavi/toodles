@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 59929f0b70bb7a9408396d9c62a7f65052d229f674e2c8e97cc76ce7845aaa20
+-- hash: 68456fca343a19c9b0e2164a6771863c09539c87f72abfd4582b5e5688fa6b85
 
 name:           toodles
 version:        1.0.3
@@ -54,27 +54,26 @@ library
   ghc-options: -Wall -Wcompat
   build-depends:
       MissingH >=1.4.0.1
-    , RSA
+    , RSA >=2.3.0
     , aeson ==1.3.1.1
-    , aeson-pretty
     , base >=4.4.0 && <5
-    , base64-bytestring
+    , base64-bytestring ==1.0.0.1
     , blaze-html ==0.9.1.1
-    , bytestring
+    , bytestring >=0.10.8.2
     , cmdargs ==0.10.20
     , directory ==1.3.1.5
     , extra ==1.6.13
     , hspec >=2.4.4
     , hspec-expectations >=0.8.2
     , megaparsec ==6.5.0
-    , process
+    , process >=1.6.3.0
     , regex-posix ==0.95.2
     , servant ==0.14.1
     , servant-blaze ==0.8
     , servant-server ==0.14.1
     , strict ==0.3.2
     , text ==1.2.3.1
-    , time
+    , time >=1.8.0.2
     , wai ==3.2.1.2
     , warp ==3.2.25
     , yaml ==0.8.32
@@ -96,27 +95,26 @@ executable toodles
   ghc-options: -Wall -Wcompat -threaded -rtsopts -O3 -Wall -with-rtsopts=-N
   build-depends:
       MissingH >=1.4.0.1
-    , RSA
+    , RSA >=2.3.0
     , aeson ==1.3.1.1
-    , aeson-pretty
     , base >=4.4.0 && <5
-    , base64-bytestring
+    , base64-bytestring ==1.0.0.1
     , blaze-html ==0.9.1.1
-    , bytestring
+    , bytestring >=0.10.8.2
     , cmdargs ==0.10.20
     , directory ==1.3.1.5
     , extra ==1.6.13
     , hspec >=2.4.4
     , hspec-expectations >=0.8.2
     , megaparsec ==6.5.0
-    , process
+    , process >=1.6.3.0
     , regex-posix ==0.95.2
     , servant ==0.14.1
     , servant-blaze ==0.8
     , servant-server ==0.14.1
     , strict ==0.3.2
     , text ==1.2.3.1
-    , time
+    , time >=1.8.0.2
     , wai ==3.2.1.2
     , warp ==3.2.25
     , yaml ==0.8.32
@@ -142,7 +140,7 @@ test-suite toodles-test
     , aeson ==1.3.1.1
     , base >=4.4.0 && <5
     , blaze-html ==0.9.1.1
-    , bytestring
+    , bytestring >=0.10.8.2
     , cmdargs ==0.10.20
     , directory ==1.3.1.5
     , extra ==1.6.13
@@ -155,7 +153,7 @@ test-suite toodles-test
     , servant-server ==0.14.1
     , strict ==0.3.2
     , text ==1.2.3.1
-    , time
+    , time >=1.8.0.2
     , toodles
     , wai ==3.2.1.2
     , warp ==3.2.25
