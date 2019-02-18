@@ -154,24 +154,6 @@ $ toodles -d /path/to/your/project -p 9001
 $ toodles
 ```
 
-### Background
-
-I work at a small startup called DotDashPay and over time the TODOs in our code
-base continued building up to the point where it was difficult to use them
-holistically. While the information in the TODOs was actually very useful and
-methodically written, the fact that were couldn't easily organize them started
-to weigh on us as mounting tech debt.
-
-While not our main product focus, we try hard to find opportunities to build
-tools that make use of the organization schemes we already have in place, since
-doing so is a big win for us. Toodles became a nights and weekends side
-project to use the pre-existing TODO scheme we had spent years using, but had
-never effectively capitalized on.
-
-A quick plug if you also like building great tools, like working in a fast paced
-startup environment, and are located in the SF Bay Area: Reach out at
-careers@dotdashpay.com and come work with us!
-
 ### Contributing
 
 Contributions in any form are welcome! A few bits of info:
