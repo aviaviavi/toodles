@@ -9,6 +9,8 @@ ignore:
 - node_modules
 - Spec.hs
 - venv
+- vue.js
+- min.js
 # `flags` specify other keywords you might want to scan other than TODO
 # Hardcoded ones include TODO, FIXME, and XXX
 flags:
