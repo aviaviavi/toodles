@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 0709da996373ff5890f73e463a3f6cc30a25581c0d04ccacce8c52ddfd218176
+-- hash: c52019037b5f82bddc9f28d4f29fb662919301ffde00f6a0229ea4d54c88d4b3
 
 name:           toodles
-version:        1.0.3
+version:        1.1.0
 synopsis:       Manage the TODO entries in your code
 description:    Toodles scrapes your entire repository for TODO entries and organizes them so you can manage your project directly from the code. View, filter, sort, and edit your TODO\'s with an easy to use web application. When you make changes via toodles, the edits will be applied directly the TODO entries in your code. When you\'re done, commit and push your changes to share them with your team!
 category:       Project Management
@@ -63,8 +63,6 @@ library
     , cmdargs ==0.10.20
     , directory ==1.3.1.5
     , extra ==1.6.13
-    , hspec >=2.4.4
-    , hspec-expectations >=0.8.2
     , megaparsec ==6.5.0
     , process >=1.6.3.0
     , regex-posix ==0.95.2
@@ -104,8 +102,6 @@ executable toodles
     , cmdargs ==0.10.20
     , directory ==1.3.1.5
     , extra ==1.6.13
-    , hspec >=2.4.4
-    , hspec-expectations >=0.8.2
     , megaparsec ==6.5.0
     , process >=1.6.3.0
     , regex-posix ==0.95.2

@@ -33,8 +33,6 @@ RUN apt-get update
 RUN apt-get install -y wget
 RUN wget -qO- https://get.haskellstack.org/ | sh
 
-# dependencies for license verification. for now, python
-# TODO(#techdebt) - license verification should be done in haskell, this removed
 RUN pip install pycrypto
 
 CMD ["toodles","-d","/repo/"]

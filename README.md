@@ -95,29 +95,7 @@ These languages will be scanned for any TODO's:
 Submit a PR if you'd like a language to be added. There will eventually be
 support for this to be user configurable
 
-### Installing
-
-The easiest way to get toodles is via [stack](https://docs.haskellstack.org).
-Just a `stack install --resolver=lts-12.14 toodles` and you're done! Alternatively, with GHC 8.4.3
-you can use [cabal](https://www.haskell.org/cabal/download.html). If there is
-desire for it I can look into precompiled distribution.
-
-### Running
-
-Invoking `toodles` with no arguments will treat the current directory as the
-project root and will start a server on port 9001. You can set these with the
-`-d` and `-p` flags, respectively.
-
-
-```bash
-# $ toodles -d <root directory of your project> -p <port to run server>
-# for more info run:
-# $ toodles --help
-$ toodles -d /path/to/your/project -p 9001
-# or simply
-$ toodles
-```
-#### Running with Docker
+### Running with Docker
 
 You can run a pre-built toodles for your current directory via docker:
 
@@ -139,6 +117,41 @@ $ docker build -t toodles .
 # directory you are currently in:
 $ docker run -it -v $(pwd):/repo -p 9001:9001 toodles
 
+```
+
+### Installing manually
+
+The best way to install manually is with [stack](https://docs.haskellstack.org).
+Just a `stack install --resolver=lts-12.14 toodles` and you're done! Alternatively, with GHC 8.4.3
+you can use [cabal](https://www.haskell.org/cabal/download.html).
+
+You'll also need to PyCrypto. If you have pip, you can run:
+
+```bash
+$ pip install pycrypto
+```
+
+If you've closed the toodles repo directly, you can also run
+
+```bash
+$ cd path/to/toodles
+$ pip install -r requirements.txt
+```
+
+### Running
+
+Invoking `toodles` with no arguments will treat the current directory as the
+project root and will start a server on port 9001. You can set these with the
+`-d` and `-p` flags, respectively.
+
+
+```bash
+# $ toodles -d <root directory of your project> -p <port to run server>
+# for more info run:
+# $ toodles --help
+$ toodles -d /path/to/your/project -p 9001
+# or simply
+$ toodles
 ```
 
 ### Background

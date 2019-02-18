@@ -60,6 +60,8 @@ isLicenseValid :: FilePath -> License -> IO (Either String UserTier)
 isLicenseValid publicKeyPath (License _ encodedPayload sig) = do
   dataDir <- getDataDir
   now <- ((* 1000) . round) `fmap` getPOSIXTime
+  -- dependencies for license verification. for now, python
+  -- TODO(#techdebt) - license verification should be done in haskell, this removed
   let args =
         [ dataDir ++ "/verify.py"
         , publicKeyPath
