@@ -8,8 +8,7 @@
 module License
   (
     UserTier(..),
-ToodlesLicense(..),
-
+    ToodlesLicense(..),
     readLicense
   ) where
 
