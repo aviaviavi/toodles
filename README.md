@@ -96,29 +96,7 @@ These languages will be scanned for any TODO's:
 Submit a PR if you'd like a language to be added. There will eventually be
 support for this to be user configurable
 
-### Installing
-
-The easiest way to get toodles is via [stack](https://docs.haskellstack.org).
-Just a `stack install --resolver=lts-12.14 toodles` and you're done! Alternatively, with GHC 8.4.3
-you can use [cabal](https://www.haskell.org/cabal/download.html). If there is
-desire for it I can look into precompiled distribution.
-
-### Running
-
-Invoking `toodles` with no arguments will treat the current directory as the
-project root and will start a server on port 9001. You can set these with the
-`-d` and `-p` flags, respectively.
-
-
-```bash
-# $ toodles -d <root directory of your project> -p <port to run server>
-# for more info run:
-# $ toodles --help
-$ toodles -d /path/to/your/project -p 9001
-# or simply
-$ toodles
-```
-#### Running with Docker
+### Running with Docker
 
 You can run a pre-built toodles for your current directory via docker:
 
@@ -142,23 +120,40 @@ $ docker run -it -v $(pwd):/repo -p 9001:9001 toodles
 
 ```
 
-### Background
+### Installing manually
 
-I work at a small startup called DotDashPay and over time the TODOs in our code
-base continued building up to the point where it was difficult to use them
-holistically. While the information in the TODOs was actually very useful and
-methodically written, the fact that were couldn't easily organize them started
-to weigh on us as mounting tech debt.
+The best way to install manually is with [stack](https://docs.haskellstack.org).
+Just a `stack install --resolver=lts-12.14 toodles` and you're done! Alternatively, with GHC 8.4.3
+you can use [cabal](https://www.haskell.org/cabal/download.html).
 
-While not our main product focus, we try hard to find opportunities to build
-tools that make use of the organization schemes we already have in place, since
-doing so is a big win for us. Toodles became a nights and weekends side
-project to use the pre-existing TODO scheme we had spent years using, but had
-never effectively capitalized on.
+You'll also need to PyCrypto. If you have pip, you can run:
 
-A quick plug if you also like building great tools, like working in a fast paced
-startup environment, and are located in the SF Bay Area: Reach out at
-careers@dotdashpay.com and come work with us!
+```bash
+$ pip install pycrypto
+```
+
+If you've closed the toodles repo directly, you can also run
+
+```bash
+$ cd path/to/toodles
+$ pip install -r requirements.txt
+```
+
+### Running
+
+Invoking `toodles` with no arguments will treat the current directory as the
+project root and will start a server on port 9001. You can set these with the
+`-d` and `-p` flags, respectively.
+
+
+```bash
+# $ toodles -d <root directory of your project> -p <port to run server>
+# for more info run:
+# $ toodles --help
+$ toodles -d /path/to/your/project -p 9001
+# or simply
+$ toodles
+```
 
 ### Contributing
 

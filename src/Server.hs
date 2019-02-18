@@ -7,7 +7,9 @@
 module Server where
 
 import           Config
+import           License
 import           Parse
+import           Paths_toodles
 import           ToodlesApi
 import           Types
 
@@ -34,6 +36,9 @@ import qualified Text.Blaze.Html5       as BZ
 import           Text.Printf
 import           Text.Regex.Posix
 
+freeResultsLimit :: Int
+freeResultsLimit = 100
+
 data ToodlesConfig = ToodlesConfig
   { ignore :: [FilePath]
   , flags  :: [UserFlag]
@@ -54,18 +59,31 @@ app s = serve toodlesAPI server
     server = liftIO . getFullSearchResults s
         :<|> deleteTodos s
         :<|> editTodos s
+        :<|> getLicense s
         :<|> serveDirectoryFileServer (dataPath s)
         :<|> showRawFile s
         :<|> root s
 
 root :: ToodlesState -> [Text] -> Handler Html
-root (ToodlesState _ dPath) path =
+root (ToodlesState _ dPath _) path =
     if null path then
         liftIO $ BZ.preEscapedToHtml <$> readFile (dPath ++ "/html/index.html")
     else throwError $ err404 { errBody = "Not found" }
 
+getLicense :: ToodlesState -> Handler GetLicenseResponse
+getLicense (ToodlesState _ _ tierRef) = do
+  license <- liftIO readUserTier
+  _ <- liftIO $ atomicModifyIORef' tierRef (const (license, license))
+  return $ GetLicenseResponse license
+
+readUserTier :: IO UserTier
+readUserTier = do
+  dataDir <- getDataDir
+  licenseRead <- readLicense (dataDir ++ "/toodles-license-public-key.pem") "/etc/toodles/license.json"
+  return $ either BadLicense id licenseRead
+
 showRawFile :: ToodlesState -> Integer -> Handler Html
-showRawFile (ToodlesState ref _) eId = do
+showRawFile (ToodlesState ref _ _) eId = do
     storedResults <- liftIO $ readIORef ref
     case storedResults of
       (Just (TodoListResult r _)) -> do
@@ -88,7 +106,7 @@ showRawFile (ToodlesState ref _) eId = do
                 codeLines)
 
 editTodos :: ToodlesState -> EditTodoRequest -> Handler Text
-editTodos s@(ToodlesState ref _) req = do
+editTodos s@(ToodlesState ref _ _) req = do
   storedResults <- liftIO $ readIORef ref
   case storedResults of
     (Just (TodoListResult r _)) -> do
@@ -133,10 +151,10 @@ editTodos s@(ToodlesState ref _) req = do
 data UpdateType = UpdateTypeEdit | UpdateTypeDelete deriving (Eq)
 
 updateCache :: MonadIO m => ToodlesState -> [TodoEntry] -> m ()
-updateCache (ToodlesState ref _) entries = do
+updateCache (ToodlesState ref _ _) entries = do
   storedResults <- liftIO $ readIORef ref
   case storedResults of
-    (Just (TodoListResult currentCache _)) -> do
+    (Just (TodoListResult currentCache resultLimit)) -> do
       let idsToUpdate = map entryId entries
           newCache =
             TodoListResult
@@ -144,7 +162,7 @@ updateCache (ToodlesState ref _) entries = do
                  (filter
                     (\item -> entryId item `notElem` idsToUpdate)
                     currentCache))
-              "edits applied"
+              resultLimit
       _ <-
         liftIO $ atomicModifyIORef' ref (const (Just newCache, Just newCache))
       return ()
@@ -214,7 +232,7 @@ updateTodoLinesInFile f todo = do
     slice a b xs = take (b - a + 1) (drop a xs)
 
 deleteTodos :: ToodlesState -> DeleteTodoRequest -> Handler Text
-deleteTodos (ToodlesState ref _) req = do
+deleteTodos (ToodlesState ref _ _) req = do
     storedResults <- liftIO $ readIORef ref
     case storedResults of
       (Just refVal@(TodoListResult r _)) -> do
@@ -268,16 +286,16 @@ setAbsolutePath args = do
     return $ args {directory = absolute}
 
 getFullSearchResults :: ToodlesState -> Bool -> IO TodoListResult
-getFullSearchResults (ToodlesState ref _) recompute = do
+getFullSearchResults (ToodlesState ref _ tierRef) recompute = do
   result <- readIORef ref
+  userLicense <- readIORef tierRef
   if recompute || isNothing result
     then do
       putStrLn "refreshing todo's"
       userArgs <- toodlesArgs >>= setAbsolutePath
-      sResults <- runFullSearch userArgs
+      sResults <- runFullSearch (userArgs { limit_results = if userLicense == Commercial then 0 else freeResultsLimit})
       atomicModifyIORef' ref (const (Just sResults, sResults))
-    else do
-      putStrLn "cached read"
+    else
       return $ fromMaybe (error "tried to read from the cache when there wasn't anything there") result
 
 runFullSearch :: ToodlesArgs -> IO TodoListResult
@@ -295,7 +313,8 @@ runFullSearch userArgs = do
     let filteredTodos = filter (filterSearch (assignee_search userArgs)) parsedTodos
         resultList = limitSearch filteredTodos $ limit_results userArgs
         indexedResults = map (\(i, r) -> r {entryId = i}) $ zip [1 ..] resultList
-    return $ TodoListResult indexedResults ""
+        limit = limit_results userArgs
+    return $ TodoListResult indexedResults (limit /= 0 && (length indexedResults >= limit))
 
     where
     filterSearch :: Maybe SearchFilter -> TodoEntry -> Bool
@@ -343,7 +362,7 @@ getAllFiles (ToodlesConfig ignoredPaths _) basePath =
     fileHasValidExtension path = any (\ext -> ext `T.isSuffixOf` T.pack path) (map extension fileTypeToComment)
 
     isValidFile :: FilePath -> Bool
-    isValidFile path = (not $ ignorePath path) && fileHasValidExtension path
+    isValidFile path = not (ignorePath path) && fileHasValidExtension path
 
 
 mapHead :: (a -> a) -> [a] -> [a]

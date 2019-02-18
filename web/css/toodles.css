@@ -146,3 +146,19 @@ td, th {
 .input-error {
     color: red;
 }
+
+.bad-license-banner {
+    background-color: #d1345b;
+    color: white;
+    text-align: center;
+}
+
+.bad-license-banner a {
+    text-decoration: underline;
+    color: white;
+}
+
+.warning-banner {
+    background-color: #FFBE0B;
+}
+

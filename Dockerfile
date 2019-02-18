@@ -33,4 +33,6 @@ RUN apt-get update
 RUN apt-get install -y wget
 RUN wget -qO- https://get.haskellstack.org/ | sh
 
+RUN pip install pycrypto
+
 CMD ["toodles","-d","/repo/"]
