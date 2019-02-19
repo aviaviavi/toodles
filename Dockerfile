@@ -11,6 +11,8 @@ COPY src/ /toodles-app/src
 COPY test/ /toodles-app/test
 COPY web/ /toodles-app/web
 COPY README.md /toodles-app/
+COPY toodles-license-public-key.pem /toodles-app/
+COPY verify.py /toodles-app/
 
 RUN stack install --only-dependencies
 
@@ -30,9 +32,10 @@ EXPOSE 9001
 # have to install stack to make the binary from the previous step work in our
 # container
 RUN apt-get update
-RUN apt-get install -y wget
+RUN apt-get install -y wget python-setuptools python-dev build-essential
 RUN wget -qO- https://get.haskellstack.org/ | sh
 
+RUN easy_install pip
 RUN pip install pycrypto
 
 CMD ["toodles","-d","/repo/"]
