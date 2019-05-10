@@ -24,7 +24,6 @@ $(document).ready(function() {
     },
     created: function() {
       this.refresh()()
-      return this.getLicense()
     },
     methods: {
       // higher order for ease of calling from vue templates

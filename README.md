@@ -96,7 +96,15 @@ These languages will be scanned for any TODO's:
 Submit a PR if you'd like a language to be added. There will eventually be
 support for this to be user configurable
 
-### Running with Docker
+### Installing with Scarf
+
+[Scarf](https://scarf.sh) is the easiest way to get Toodles.
+
+```bash
+$ scarf install toodles
+```
+
+### Installing with Docker
 
 You can run a pre-built toodles for your current directory via docker:
 
@@ -105,7 +113,16 @@ You can run a pre-built toodles for your current directory via docker:
 $ docker run -it -v $(pwd):/repo -p 9001:9001 aviaviavi/toodles
 ```
 
-Just mount your project into the container's `/repo` and direct a port of your choice to the container's `9001`.
+Just mount your project into the container's `/repo` and direct a port of your
+choice to the container's `9001`.
+
+### Building Toodles
+
+Toodles builds with stack [stack](https://docs.haskellstack.org). Just a `stack
+build` should do it. If you'd like to build toodles without cloning the source,
+you can have stack build toodles with `stack install --resolver=lts-12.14`!
+
+#### Building with Docker
 
 For convenience this repository also provides a `Dockerfile` to automatically
 build toodles.
@@ -113,30 +130,11 @@ build toodles.
 ```bash
 # to build container run:
 $ cd /path/to/toodles/repo
-$ docker build -t toodles .
+$ docker build -t toodles Dockerfile.dev .
 # afterwards you can run the following command to execute toodles for the
 # directory you are currently in:
 $ docker run -it -v $(pwd):/repo -p 9001:9001 toodles
 
-```
-
-### Installing manually
-
-The best way to install manually is with [stack](https://docs.haskellstack.org).
-Just a `stack install --resolver=lts-12.14 toodles` and you're done! Alternatively, with GHC 8.4.3
-you can use [cabal](https://www.haskell.org/cabal/download.html).
-
-You'll also need to PyCrypto. If you have pip, you can run:
-
-```bash
-$ pip install pycrypto
-```
-
-If you've closed the toodles repo directly, you can also run
-
-```bash
-$ cd path/to/toodles
-$ pip install -r requirements.txt
 ```
 
 ### Running

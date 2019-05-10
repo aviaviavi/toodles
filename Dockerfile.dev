@@ -32,10 +32,7 @@ EXPOSE 9001
 # have to install stack to make the binary from the previous step work in our
 # container
 RUN apt-get update
-RUN apt-get install -y wget python-setuptools python-dev build-essential
+RUN apt-get install -y wget build-essential
 RUN wget -qO- https://get.haskellstack.org/ | sh
-
-RUN easy_install pip
-RUN pip install pycrypto
 
 CMD ["toodles","-d","/repo/"]

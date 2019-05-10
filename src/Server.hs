@@ -293,7 +293,7 @@ getFullSearchResults (ToodlesState ref _ tierRef) recompute = do
     then do
       putStrLn "refreshing todo's"
       userArgs <- toodlesArgs >>= setAbsolutePath
-      sResults <- runFullSearch (userArgs { limit_results = if userLicense == Commercial then 0 else freeResultsLimit})
+      sResults <- runFullSearch (userArgs { limit_results = 0 })
       atomicModifyIORef' ref (const (Just sResults, sResults))
     else
       return $ fromMaybe (error "tried to read from the cache when there wasn't anything there") result
