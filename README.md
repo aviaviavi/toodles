@@ -118,9 +118,9 @@ choice to the container's `9001`.
 
 ### Building Toodles
 
-Toodles builds with stack [stack](https://docs.haskellstack.org). Just a `stack
+Toodles builds with  [stack](https://docs.haskellstack.org). Just a `stack
 build` should do it. If you'd like to build toodles without cloning the source,
-you can have stack build toodles with `stack install --resolver=lts-12.14`!
+you can have stack build toodles with `stack install --resolver=lts-12.14 toodles`!
 
 #### Building with Docker
 
