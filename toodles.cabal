@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f1065a51b86ff48993a22be460338247dcf2d32b7beb90b72f0e4e23622d3f8c
+-- hash: f68cfaef2046d66fb1295333e3b53e62da19f337ca7e7d1e2019158db31b32cf
 
 name:           toodles
 version:        1.2.1
@@ -102,6 +102,7 @@ executable toodles
     , cmdargs ==0.10.20
     , directory ==1.3.1.5
     , extra ==1.6.13
+    , filepath ==1.4.2
     , megaparsec ==6.5.0
     , process >=1.6.3.0
     , regex-posix ==0.95.2

@@ -8,16 +8,34 @@ import           Paths_toodles
 import           Server
 import           Types
 
+import           Control.Monad            (when)
 import           Data.IORef               (newIORef)
 import           Data.Maybe               (fromMaybe)
 import qualified Data.Text                as T (unpack)
 import           Network.Wai.Handler.Warp (run)
+import           System.Directory
+import           System.Environment
+import           System.FilePath.Posix
 import           Text.Printf              (printf)
 
 main :: IO ()
 main = do
-  dataDir <- getDataDir
-  licenseRead <- readLicense (dataDir ++ "/toodles-license-public-key.pem") "/etc/toodles/license.json"
+  dataDirLocal <- (return . takeDirectory) =<< getExecutablePath
+  dataDirBuilt <- getDataDir
+  useBinaryLocalDataDir <- doesDirectoryExist $ dataDirLocal <> "/web"
+  useBuiltDataDir <- doesDirectoryExist $ dataDirBuilt <> "/web"
+  when
+    (not useBuiltDataDir && not useBuiltDataDir)
+    (fail
+       "Couldn't initialize toodles, no valid data directory found. Please file a bug on Github.")
+  let dataDir =
+        if useBinaryLocalDataDir
+          then dataDirLocal
+          else dataDirBuilt
+  licenseRead <-
+    readLicense
+      (dataDir ++ "/toodles-license-public-key.pem")
+      "/etc/toodles/license.json"
   let license = (either (BadLicense) (id) licenseRead)
   userArgs <- toodlesArgs >>= setAbsolutePath
   case userArgs of
