@@ -25,9 +25,10 @@ main = do
   useBinaryLocalDataDir <- doesDirectoryExist $ dataDirLocal <> "/web"
   useBuiltDataDir <- doesDirectoryExist $ dataDirBuilt <> "/web"
   when
-    (not useBuiltDataDir && not useBuiltDataDir)
-    (fail
-       "Couldn't initialize toodles, no valid data directory found. Please file a bug on Github.")
+    ((not useBinaryLocalDataDir) && (not useBuiltDataDir))
+    (fail $
+     "Couldn't initialize toodles, no valid data directory found. Please file a bug on Github. Directories tried: \n" ++
+     dataDirLocal ++ "\n" ++ dataDirBuilt)
   let dataDir =
         if useBinaryLocalDataDir
           then dataDirLocal
