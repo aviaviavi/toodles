@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/aviaviavi/toodles.svg?branch=master)](https://travis-ci.org/aviaviavi/toodles)
 [![Hackage](https://img.shields.io/hackage/v/toodles.svg)](https://hackage.haskell.org/package/toodles)
-[![Scarf](https://scarf.sh/package/badge/toodles)](https://scarfh.sh/package/avi/toodles)
+[![Scarf](https://scarf.sh/package/badge/toodles)](https://scarf.sh/package/avi/toodles)
 [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/toodles-todos/community)
 
 Toodles scrapes your entire repository for TODO entries and organizes them so
