@@ -111,7 +111,7 @@ You can run a pre-built toodles for your current directory via docker:
 
 ```bash
 # execute toodles for the directory you are currently in:
-$ docker run -it -v $(pwd):/repo -p 9001:9001 aviaviavi/toodles
+$ docker run -it -v $(pwd):/repo -p 9001:9001 docker.avi.press/aviaviavi/toodles
 ```
 
 Just mount your project into the container's `/repo` and direct a port of your
