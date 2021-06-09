@@ -2,7 +2,6 @@
 
 [![Build Status](https://travis-ci.org/aviaviavi/toodles.svg?branch=master)](https://travis-ci.org/aviaviavi/toodles)
 [![Hackage](https://img.shields.io/hackage/v/toodles.svg)](https://hackage.haskell.org/package/toodles)
-[![Scarf](https://scarf.sh/package/badge/toodles)](https://scarf.sh/package/avi/toodles)
 [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/toodles-todos/community)
 
 Toodles scrapes your entire repository for TODO entries and organizes them so
@@ -96,14 +95,6 @@ These languages will be scanned for any TODO's:
 
 Submit a PR if you'd like a language to be added. There will eventually be
 support for this to be user configurable
-
-### Installing with Scarf
-
-[Scarf](https://scarf.sh) is the easiest way to get Toodles.
-
-```bash
-$ scarf install toodles
-```
 
 ### Installing with Docker
 
