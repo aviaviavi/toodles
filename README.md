@@ -147,9 +147,6 @@ $ toodles
 
 ### Contributing
 
-If Toodles is useful to you or your organization, please consider supporting the project 
-by purchasing Toodles on [Scarf](https://scarf.sh/package/avi/toodles).
-
 Contributions in any form are welcome! A few bits of info:
 
 - Don't be shy, ask questions! Contributing to Toodles should be welcoming for
