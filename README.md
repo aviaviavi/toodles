@@ -1,6 +1,5 @@
 # Toodles
 
-[![Build Status](https://travis-ci.org/aviaviavi/toodles.svg?branch=master)](https://travis-ci.org/aviaviavi/toodles)
 [![Hackage](https://img.shields.io/hackage/v/toodles.svg)](https://hackage.haskell.org/package/toodles)
 [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/toodles-todos/community)
 
